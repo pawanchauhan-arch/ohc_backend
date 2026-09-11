@@ -1,0 +1,331 @@
+{
+  ".env": "file",
+  ".eslintrc.js": "file",
+  ".gitignore": "file",
+  ".prettierrc": "file",
+  "config": {
+    "database.json": "file",
+    "envConfig.ts": "file"
+  },
+  "dist": {
+    "config": {
+      "envConfig.d.ts": "file",
+      "envConfig.js": "file",
+      "envConfig.js.map": "file"
+    },
+    "src": {
+      "app.controller.d.ts": "file",
+      "app.controller.js": "file",
+      "app.controller.js.map": "file",
+      "app.module.d.ts": "file",
+      "app.module.js": "file",
+      "app.module.js.map": "file",
+      "app.service.d.ts": "file",
+      "app.service.js": "file",
+      "app.service.js.map": "file",
+      "helper": {
+        "sendOtp.d.ts": "file",
+        "sendOtp.js": "file",
+        "sendOtp.js.map": "file"
+      },
+      "main.d.ts": "file",
+      "main.js": "file",
+      "main.js.map": "file",
+      "models": {
+        "abdm-token.d.ts": "file",
+        "abdm-token.js": "file",
+        "abdm-token.js.map": "file",
+        "Banner.d.ts": "file",
+        "Banner.js": "file",
+        "Banner.js.map": "file",
+        "Center.d.ts": "file",
+        "Center.js": "file",
+        "Center.js.map": "file",
+        "CenterUser.d.ts": "file",
+        "CenterUser.js": "file",
+        "CenterUser.js.map": "file",
+        "CetManagement.d.ts": "file",
+        "CetManagement.js": "file",
+        "CetManagement.js.map": "file",
+        "CetUser.d.ts": "file",
+        "CetUser.js": "file",
+        "CetUser.js.map": "file",
+        "Consultation.d.ts": "file",
+        "Consultation.js": "file",
+        "Consultation.js.map": "file",
+        "Doctor.d.ts": "file",
+        "Doctor.js": "file",
+        "Doctor.js.map": "file",
+        "DriverFamilyHistory.d.ts": "file",
+        "DriverFamilyHistory.js": "file",
+        "DriverFamilyHistory.js.map": "file",
+        "DriverHealthCheckup.d.ts": "file",
+        "DriverHealthCheckup.js": "file",
+        "DriverHealthCheckup.js.map": "file",
+        "DriverHealthStats.d.ts": "file",
+        "DriverHealthStats.js": "file",
+        "DriverHealthStats.js.map": "file",
+        "DriverMaster.d.ts": "file",
+        "DriverMaster.js": "file",
+        "DriverMaster.js.map": "file",
+        "DriverMasterPersonal.d.ts": "file",
+        "DriverMasterPersonal.js": "file",
+        "DriverMasterPersonal.js.map": "file",
+        "OTP.d.ts": "file",
+        "OTP.js": "file",
+        "OTP.js.map": "file",
+        "Permissions.d.ts": "file",
+        "Permissions.js": "file",
+        "Permissions.js.map": "file",
+        "PermissionsMetaData.d.ts": "file",
+        "PermissionsMetaData.js": "file",
+        "PermissionsMetaData.js.map": "file",
+        "Prescription.d.ts": "file",
+        "Prescription.js": "file",
+        "Prescription.js.map": "file",
+        "PrescriptionMedicine.d.ts": "file",
+        "PrescriptionMedicine.js": "file",
+        "PrescriptionMedicine.js.map": "file",
+        "Request.d.ts": "file",
+        "Request.js": "file",
+        "Request.js.map": "file",
+        "Role.d.ts": "file",
+        "Role.js": "file",
+        "Role.js.map": "file",
+        "User.d.ts": "file",
+        "User.js": "file",
+        "User.js.map": "file"
+      },
+      "modules": {
+        "ABDM": {
+          "ABDM.controller.d.ts": "file",
+          "ABDM.controller.js": "file",
+          "ABDM.controller.js.map": "file",
+          "ABDM.module.d.ts": "file",
+          "ABDM.module.js": "file",
+          "ABDM.module.js.map": "file",
+          "ABDM.service.d.ts": "file",
+          "ABDM.service.js": "file",
+          "ABDM.service.js.map": "file"
+        },
+        "Banner": {
+          "Banner.controller.d.ts": "file",
+          "Banner.controller.js": "file",
+          "Banner.controller.js.map": "file",
+          "Banner.dto.d.ts": "file",
+          "Banner.dto.js": "file",
+          "Banner.dto.js.map": "file",
+          "Banner.module.d.ts": "file",
+          "Banner.module.js": "file",
+          "Banner.module.js.map": "file",
+          "Banner.service.d.ts": "file",
+          "Banner.service.js": "file",
+          "Banner.service.js.map": "file"
+        },
+        "Consultation": {
+          "Consultation.controller.d.ts": "file",
+          "Consultation.controller.js": "file",
+          "Consultation.controller.js.map": "file",
+          "Consultation.module.d.ts": "file",
+          "Consultation.module.js": "file",
+          "Consultation.module.js.map": "file",
+          "Consultation.service.d.ts": "file",
+          "Consultation.service.js": "file",
+          "Consultation.service.js.map": "file"
+        },
+        "Doctor": {
+          "Doctor.controller.d.ts": "file",
+          "Doctor.controller.js": "file",
+          "Doctor.controller.js.map": "file",
+          "Doctor.module.d.ts": "file",
+          "Doctor.module.js": "file",
+          "Doctor.module.js.map": "file",
+          "Doctor.service.d.ts": "file",
+          "Doctor.service.js": "file",
+          "Doctor.service.js.map": "file"
+        },
+        "DriverHealthCheckup": {
+          "DriverHealthCheckup.controller.d.ts": "file",
+          "DriverHealthCheckup.controller.js": "file",
+          "DriverHealthCheckup.controller.js.map": "file",
+          "DriverHealthCheckup.module.d.ts": "file",
+          "DriverHealthCheckup.module.js": "file",
+          "DriverHealthCheckup.module.js.map": "file",
+          "DriverHealthCheckup.service.d.ts": "file",
+          "DriverHealthCheckup.service.js": "file",
+          "DriverHealthCheckup.service.js.map": "file"
+        },
+        "DriverMaster": {
+          "DriverMaster.controller.d.ts": "file",
+          "DriverMaster.controller.js": "file",
+          "DriverMaster.controller.js.map": "file",
+          "DriverMaster.module.d.ts": "file",
+          "DriverMaster.module.js": "file",
+          "DriverMaster.module.js.map": "file",
+          "DriverMaster.service.d.ts": "file",
+          "DriverMaster.service.js": "file",
+          "DriverMaster.service.js.map": "file"
+        },
+        "otp": {
+          "otp.controller.d.ts": "file",
+          "otp.controller.js": "file",
+          "otp.controller.js.map": "file",
+          "otp.module.d.ts": "file",
+          "otp.module.js": "file",
+          "otp.module.js.map": "file",
+          "otp.service.d.ts": "file",
+          "otp.service.js": "file",
+          "otp.service.js.map": "file"
+        },
+        "Prescription": {
+          "Prescription.controller.d.ts": "file",
+          "Prescription.controller.js": "file",
+          "Prescription.controller.js.map": "file",
+          "Prescription.module.d.ts": "file",
+          "Prescription.module.js": "file",
+          "Prescription.module.js.map": "file",
+          "Prescription.service.d.ts": "file",
+          "Prescription.service.js": "file",
+          "Prescription.service.js.map": "file"
+        },
+        "PrescriptionMedicine": {
+          "create-prescription-medicine-dto.d.ts": "file",
+          "create-prescription-medicine-dto.js": "file",
+          "create-prescription-medicine-dto.js.map": "file",
+          "PrescriptionMedicine.controller.d.ts": "file",
+          "PrescriptionMedicine.controller.js": "file",
+          "PrescriptionMedicine.controller.js.map": "file",
+          "PrescriptionMedicine.module.d.ts": "file",
+          "PrescriptionMedicine.module.js": "file",
+          "PrescriptionMedicine.module.js.map": "file",
+          "PrescriptionMedicine.service.d.ts": "file",
+          "PrescriptionMedicine.service.js": "file",
+          "PrescriptionMedicine.service.js.map": "file",
+          "update-prescription-medicine-dto.d.ts": "file",
+          "update-prescription-medicine-dto.js": "file",
+          "update-prescription-medicine-dto.js.map": "file"
+        },
+        "Request": {
+          "Request.controller.d.ts": "file",
+          "Request.controller.js": "file",
+          "Request.controller.js.map": "file",
+          "Request.module.d.ts": "file",
+          "Request.module.js": "file",
+          "Request.module.js.map": "file",
+          "Request.service.d.ts": "file",
+          "Request.service.js": "file",
+          "Request.service.js.map": "file"
+        }
+      },
+      "utils": {
+        "rsa-encryptor.util.d.ts": "file",
+        "rsa-encryptor.util.js": "file",
+        "rsa-encryptor.util.js.map": "file"
+      }
+    },
+    "tsconfig.build.tsbuildinfo": "file"
+  },
+  "generateStructure.js": "file",
+  "nest-cli.json": "file",
+  "package-lock.json": "file",
+  "package.json": "file",
+  "README.md": "file",
+  "src": {
+    "app.controller.spec.ts": "file",
+    "app.controller.ts": "file",
+    "app.module.ts": "file",
+    "app.service.ts": "file",
+    "helper": {
+      "sendOtp.ts": "file"
+    },
+    "main.ts": "file",
+    "models": {
+      "abdm-token.ts": "file",
+      "Banner.ts": "file",
+      "Center.ts": "file",
+      "CenterUser.ts": "file",
+      "CetManagement.ts": "file",
+      "CetUser.ts": "file",
+      "Consultation.ts": "file",
+      "Doctor.ts": "file",
+      "DriverFamilyHistory.ts": "file",
+      "DriverHealthCheckup.ts": "file",
+      "DriverHealthStats.ts": "file",
+      "DriverMaster.ts": "file",
+      "DriverMasterPersonal.ts": "file",
+      "OTP.ts": "file",
+      "Permissions.ts": "file",
+      "PermissionsMetaData.ts": "file",
+      "Prescription.ts": "file",
+      "PrescriptionMedicine.ts": "file",
+      "Request.ts": "file",
+      "Role.ts": "file",
+      "User.ts": "file"
+    },
+    "modules": {
+      "ABDM": {
+        "ABDM.controller.ts": "file",
+        "ABDM.module.ts": "file",
+        "ABDM.service.ts": "file"
+      },
+      "Banner": {
+        "Banner.controller.ts": "file",
+        "Banner.dto.ts": "file",
+        "Banner.module.ts": "file",
+        "Banner.service.ts": "file"
+      },
+      "Consultation": {
+        "Consultation.controller.ts": "file",
+        "Consultation.module.ts": "file",
+        "Consultation.service.ts": "file"
+      },
+      "Doctor": {
+        "Doctor.controller.ts": "file",
+        "Doctor.module.ts": "file",
+        "Doctor.service.ts": "file"
+      },
+      "DriverHealthCheckup": {
+        "DriverHealthCheckup.controller.ts": "file",
+        "DriverHealthCheckup.module.ts": "file",
+        "DriverHealthCheckup.service.ts": "file"
+      },
+      "DriverMaster": {
+        "DriverMaster.controller.ts": "file",
+        "DriverMaster.module.ts": "file",
+        "DriverMaster.service.ts": "file"
+      },
+      "otp": {
+        "otp.controller.ts": "file",
+        "otp.module.ts": "file",
+        "otp.service.ts": "file"
+      },
+      "Prescription": {
+        "Prescription.controller.ts": "file",
+        "Prescription.module.ts": "file",
+        "Prescription.service.ts": "file"
+      },
+      "PrescriptionMedicine": {
+        "create-prescription-medicine-dto.ts": "file",
+        "PrescriptionMedicine.controller.ts": "file",
+        "PrescriptionMedicine.module.ts": "file",
+        "PrescriptionMedicine.service.ts": "file",
+        "update-prescription-medicine-dto.ts": "file"
+      },
+      "Request": {
+        "Request.controller.ts": "file",
+        "Request.module.ts": "file",
+        "Request.service.ts": "file"
+      }
+    },
+    "utils": {
+      "rsa-encryptor.util.ts": "file",
+      "s3-image-upload.ts": "file"
+    }
+  },
+  "test": {
+    "app.e2e-spec.ts": "file",
+    "jest-e2e.json": "file"
+  },
+  "tsconfig.build.json": "file",
+  "tsconfig.json": "file"
+}

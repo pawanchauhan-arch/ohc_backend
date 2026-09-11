@@ -1,0 +1,125 @@
+# Patient Chatbot Feature – Presentation Document
+
+---
+
+## 1. Introduction
+
+The Patient Chatbot is a proposed digital front desk assistant designed to enhance patient engagement and streamline healthcare communication. Leveraging AI, it will provide patients with instant, friendly, and accurate guidance regarding their health checkup reports and prescriptions.
+
+---
+
+## 2. Feature Overview
+
+- **Conversational AI:** Patients interact with a chatbot that understands natural language and responds contextually.
+- **Data-Driven:** The chatbot accesses the patient’s health checkup records and prescriptions directly from the database in real time.
+- **Guidance, Not Diagnosis:** The chatbot explains medical terms, summarizes results, and suggests next steps, but never provides a diagnosis.
+
+---
+
+## 3. Key Use Cases
+
+- **Report Explanation:** Patients can ask, “What does my last health checkup say?” and receive a simple summary.
+- **Prescription Clarification:** Patients can inquire about their medications, dosages, and instructions.
+- **Symptom Guidance:** Patients can list symptoms and receive advice on whether to consult a doctor, monitor at home, or take other actions.
+- **Follow-up Reminders:** The chatbot can remind patients about upcoming follow-ups or suggest scheduling one based on their data.
+- **General Health Queries:** Patients can ask about medical terms or best practices for managing their health.
+
+---
+
+## 4. Technical Possibilities
+
+- **Seamless Integration:** Direct access to structured health data (no file uploads required).
+- **LLM-Powered Conversations:** Uses advanced language models for natural, context-aware responses.
+- **Secure & Compliant:** Only shares authenticated patient data; all interactions are logged for audit.
+- **Lightweight Architecture:** Minimal impact on existing systems; modular and scalable design.
+- **Customizable Persona:** The chatbot acts as a professional, friendly front desk assistant.
+
+---
+
+## 5. Benefits
+
+- **Improved Patient Understanding:** Patients receive clear, jargon-free explanations of their health data.
+- **Reduced Staff Workload:** Routine queries are handled automatically, freeing up human staff for complex cases.
+- **Faster Response Times:** Patients get instant answers, improving satisfaction and engagement.
+- **Consistent Communication:** Ensures all patients receive the same high-quality information and guidance.
+- **Data-Driven Insights:** Chat logs can be analyzed for trends, helping improve services and patient care.
+
+---
+
+## 6. Sample User Journey
+
+1. **Patient logs in** and opens the chat interface.
+2. **Chatbot greets** the patient and offers help.
+3. **Patient asks:** “Can you explain my last blood test?”
+4. **Chatbot responds:** “Your last blood test on [date] showed normal results for most parameters, but your cholesterol was slightly high. It’s best to consult your doctor for personalized advice.”
+5. **Patient follows up:** “What does high cholesterol mean?”
+6. **Chatbot explains** in simple terms and suggests next steps.
+
+---
+
+## 7. Summary & Next Steps
+
+The Patient Chatbot will transform patient engagement by providing instant, understandable, and actionable health information. Next steps include:
+- Finalizing the technical design and data sharing format (DTOs).
+- Implementing the backend and frontend modules.
+- Integrating with the chosen LLM provider.
+- Testing with real patient data and iterating based on feedback.
+
+---
+
+## 8. Enhanced User Flow
+
+The chatbot is designed to proactively assist the patient by leveraging their most recent health data. Here’s how the improved flow works:
+
+1. **Chat Initiation:**  
+   As soon as the patient opens the chat interface, the system automatically retrieves their most recent health checkup record and prescription from the database.
+
+2. **Contextual Analysis:**  
+   These records are securely sent to the AI language model (LLM), which analyzes the data in real time.
+
+3. **Proactive Engagement:**  
+   The chatbot greets the patient and offers two clear options:
+   - **Option 1:** “Would you like a review of your latest health checkup and prescription?”
+   - **Option 2:** “Or would you like to share your current symptoms for advice on next steps?”
+
+4. **Patient Choice:**  
+   - If the patient chooses a review, the chatbot summarizes the findings in simple language and offers to answer any questions.
+   - If the patient wants to discuss symptoms, the chatbot collects the information and provides guidance (e.g., whether to consult a doctor, monitor at home, etc.).
+
+5. **Continuous Support:**  
+   The chatbot remains available for follow-up questions, explanations, or to help the patient book an appointment if needed.
+
+---
+
+## 9. Why This Flow Matters
+
+- **Personalized Experience:**  
+  The chatbot uses the patient’s actual health data to make the conversation relevant and valuable from the very first message.
+
+- **Proactive Guidance:**  
+  By offering a review or symptom check, the chatbot anticipates the patient’s needs and streamlines their journey.
+
+- **Efficient Triage:**  
+  Patients with urgent symptoms are quickly identified and guided to appropriate care, improving safety and satisfaction.
+
+- **Data-Driven Insights:**  
+  Every interaction is based on real, up-to-date medical records, ensuring accuracy and trust.
+
+---
+
+## 10. Patient Chatbot – Step-by-Step Flow Diagram
+
+Below is a visual representation of the patient chatbot experience, from chat initiation to ongoing support:
+
+```
++-------------------+
+
+```
+
+---
+
+*This enhanced flow ensures that every patient receives immediate, personalized, and actionable support, making the chatbot a true digital front desk assistant.*
+
+---
+
+*Prepared for: Product, Engineering, and Clinical Stakeholders*
