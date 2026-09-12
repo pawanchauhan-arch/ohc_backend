@@ -128,4 +128,8 @@ export class OpdController {
 
     return result;
   }
+  @Get('view/count')
+  async viewOpdBillsCount(@Req() req: Request) {
+    return this.opdBillingService.viewOpdBillingCount(req['user']);
+  }
 }

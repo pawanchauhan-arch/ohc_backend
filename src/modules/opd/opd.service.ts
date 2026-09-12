@@ -2429,4 +2429,22 @@ export class OpdBillingService {
       },
     };
   }
+
+  async viewOpdBillingCount(requestingUser: any) {
+    const where = {
+      tenant_id: requestingUser.tenantId,
+      center_id: requestingUser.centerId,
+    };
+
+    const allRows = await this.viewModel.findAll({
+      where,
+      raw: true,
+      order: [['bill_no', 'DESC']],
+    });
+
+    return {
+      total: allRows.length,
+      data: allRows,
+    };
+  }
 }
