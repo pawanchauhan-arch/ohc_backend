@@ -14,7 +14,8 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationPriority } from '../../models/notification.model';
 import { ConsultationRecordingService } from '../consultationRecording/consultationRecording.service';
 import { DailyVideoService } from '../dailyVideoCall/dailyVideo.service';
-import { PaginationResponse, PaginationParams } from '../../models/PaginationResponse';
+import { PaginationResponse } from '../../models/PaginationResponse';
+import { getOperationalDateRangeWindow, getOperationalDayWindow } from '../../utils/operational-day.util';
 
 @Injectable()
 export class ConsultationService {
@@ -217,13 +218,39 @@ export class ConsultationService {
 
   async getAllConsultationsPaginated(
     page = 1,
-    limit = 20,
-    centerID?: number,
+    limit = 10,
+    centerIDs?: number[],
     daysBack?: number,
-    centerGroupIds?: number[]
+    centerGroupIds?: number[],
+    isCompleteBool?: boolean,
+    startDate?: string,
+    endDate?: string,
+    doctorName?: string,
   ): Promise<PaginationResponse<Consultation>> {
 
     const whereClause: any = {};
+
+    // Filter by completed status if specified
+    if (isCompleteBool !== undefined && isCompleteBool !== null) {
+      whereClause.iscomplete = isCompleteBool;
+    }
+
+    // Filter by Doctor Name if specified
+    if (doctorName && doctorName.trim()) {
+      whereClause.doctor_name = { [Op.iLike]: `%${doctorName.trim()}%` };
+    }
+
+    // Filter by date range (startDate & endDate) using operational day window (06:00 AM IST to 05:59:59 AM IST)
+    if (startDate && endDate) {
+      const window = getOperationalDateRangeWindow(startDate, endDate);
+      whereClause.scheduled_time = { [Op.between]: [new Date(window.startUtc), new Date(window.endUtc)] };
+    } else if (startDate) {
+      const window = getOperationalDayWindow(startDate);
+      whereClause.scheduled_time = { [Op.gte]: new Date(window.startUtc) };
+    } else if (endDate) {
+      const window = getOperationalDayWindow(endDate);
+      whereClause.scheduled_time = { [Op.lte]: new Date(window.endUtc) };
+    }
 
     // Filter by center groups if provided
     if (centerGroupIds && centerGroupIds.length > 0) {
@@ -280,13 +307,12 @@ export class ConsultationService {
         };
       }
 
-      // If centerID is also provided, intersect with group center IDs
-      if (centerID !== undefined && centerID !== null) {
-        // Check if the provided centerID is in group centers
-        if (uniqueCenterIds.includes(centerID)) {
-          whereClause.centerID = centerID;
+      // If centerIDs is also provided, intersect with group center IDs
+      if (centerIDs && centerIDs.length > 0) {
+        const intersected = centerIDs.filter(id => uniqueCenterIds.includes(id));
+        if (intersected.length > 0) {
+          whereClause.centerID = intersected.length === 1 ? intersected[0] : { [Op.in]: intersected };
         } else {
-          // Provided centerID is not in any of the groups, return empty result
           return {
             data: [],
             pagination: {
@@ -300,18 +326,18 @@ export class ConsultationService {
           };
         }
       } else {
-        // No centerID provided, filter by all centers from groups
+        // No centerIDs provided, filter by all centers from groups
         whereClause.centerID = { [Op.in]: uniqueCenterIds };
       }
     } else {
       // Filter by center (only if group filter is not applied)
-      if (centerID !== undefined && centerID !== null) {
-        whereClause.centerID = centerID;
+      if (centerIDs && centerIDs.length > 0) {
+        whereClause.centerID = centerIDs.length === 1 ? centerIDs[0] : { [Op.in]: centerIDs };
       }
     }
 
-    // Apply createdAt filter only when daysBack > 0
-    if (daysBack !== undefined && daysBack !== null && daysBack > 0) {
+    // Apply createdAt filter only when daysBack > 0 and date range is not specified
+    if (!startDate && !endDate && daysBack !== undefined && daysBack !== null && daysBack > 0) {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - daysBack);
       whereClause.createdAt = { [Op.gte]: cutoffDate };
@@ -734,9 +760,10 @@ export class ConsultationService {
     }
 
     if (filters.startDate && filters.endDate) {
-      whereClauses.push(`DATE(c."createdAt") BETWEEN :startDate AND :endDate`);
-      replacements.startDate = filters.startDate;
-      replacements.endDate = filters.endDate;
+      const window = getOperationalDateRangeWindow(filters.startDate, filters.endDate);
+      whereClauses.push(`c."scheduled_time" BETWEEN :startUtc AND :endUtc`);
+      replacements.startUtc = window.startUtc;
+      replacements.endUtc = window.endUtc;
     }
 
     if (filters.lastHours) {
@@ -773,5 +800,4 @@ export class ConsultationService {
       centerDropDownData
     };
   }
-
 }

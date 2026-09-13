@@ -2,32 +2,22 @@
 import { Injectable, HttpException, HttpStatus, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { Op } from 'sequelize';
 import { HttpService } from '@nestjs/axios';
-import { async, first, firstValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { CreateCustomerCampDto, CampPatientDto } from './samplify.dto';
 import { CampItemBarcode } from '../../models/CampItemBarcode';
 import { InjectModel } from '@nestjs/sequelize';
 import { CampListItem } from '../../models/CampListItem';
 import { CampList } from '../../models/CampList';
-import { Center } from '../../models/Center';
-import { PhlebotomistService } from '../phlebotomist/phlebotomist.service'; 
 import { DRIVERMASTER } from '../../models/DriverMaster';
-import axios from 'axios';
-import { uploadToS3WithFolder } from '../../utils/s3-image-upload';
-import { driverhealthcheckup } from "../../models/DriverHealthCheckup";
 import { KinesisStreamService } from './kinesis/kinesis.service';
 import { kinesisConfig, samplifyConfig } from 'config/envConfig';
 
 const streamName: string = kinesisConfig.streamName;
 
-
-const BUCKET_NAME_REPORTS = process.env.BUCKET_NAME_REPORTS;
-
 interface phelboDTO {
- name: string,
- phone: string,
+  name: string,
+  phone: string,
 }
-
-
 
 @Injectable()
 export class SamplifyService {
@@ -40,12 +30,9 @@ export class SamplifyService {
     @InjectModel(CampItemBarcode) private readonly barcodeModel: typeof CampItemBarcode,
     @InjectModel(CampListItem) private readonly campListItemModel: typeof CampListItem,
     @InjectModel(CampList) private readonly campListModel: typeof CampList,
-    @InjectModel(Center) private readonly centerModel: typeof Center,
     @InjectModel(DRIVERMASTER) private readonly driverModel: typeof DRIVERMASTER,
-    @InjectModel(driverhealthcheckup) private readonly driverHealthCheckupModel: typeof driverhealthcheckup,
-    private readonly phlebotomistService: PhlebotomistService,
     private readonly kinesisService: KinesisStreamService,
-  ) {}
+  ) { }
 
   private getHeaders() {
     return {
@@ -73,16 +60,16 @@ export class SamplifyService {
   async updateCampPatients(camp_unique_id: string, patient_ref_id: string, patient_data: CampPatientDto) {
     const headers = this.getHeaders();
     try {
-      patient_data.test_codes =  ["11261"];
+      patient_data.test_codes = ["11261"];
       const res = await firstValueFrom(
-        this.httpService.post(`${this.baseUrl}/order/update-camp-patients`, {camp_unique_id, patient_ref_id, patient_data}, {
+        this.httpService.post(`${this.baseUrl}/order/update-camp-patients`, { camp_unique_id, patient_ref_id, patient_data }, {
           headers,
         }),
       );
       return res.data;
     } catch (error) {
       const samplifyError = this.getSamplifyErrorDetails(error);
-      
+
       throw new HttpException(
         {
           success: false,
@@ -98,7 +85,7 @@ export class SamplifyService {
 
 
   async addCampPatients(camp_unique_id: string, patients: CampPatientDto[]): Promise<any> {
-    
+
     const camp = await this.campListModel.findOne({ where: { camp_unique_id } });
     if (!camp) {
       throw new NotFoundException('Camp not found');
@@ -168,10 +155,11 @@ export class SamplifyService {
 
       payload.test_codes = ["11261"];
       const res = await firstValueFrom(
-        this.httpService.post(url, payload, { 
-          headers })
+        this.httpService.post(url, payload, {
+          headers
+        })
       )
-      
+
       camp.camp_unique_id = res.data.camp_unique_id;
       camp.statusSamplify = "CAMP_CONFIRMED";
       await camp.save();
@@ -189,9 +177,9 @@ export class SamplifyService {
     try {
       const headers = this.getHeaders();
       const res = await firstValueFrom(
-        this.httpService.post(`${this.baseUrl}/order/fetch-customer-camps`, {camp_unique_id}, {
+        this.httpService.post(`${this.baseUrl}/order/fetch-customer-camps`, { camp_unique_id }, {
           headers,
-          
+
         }),
       );
       return res.data;
@@ -205,15 +193,9 @@ export class SamplifyService {
 
   async updateCustomerCamp(camp_unique_id: string, payload: CreateCustomerCampDto) {
     try {
-      // console.log('API Request:', {
-      //   url: `${this.baseUrl}/order/update-customer-camps`,
-      //   method: 'POST',
-      //   headers: this.getHeaders(),
-      //   body: { camp_unique_id, ...payload },
-      // });
       const headers = this.getHeaders();
       const res = await firstValueFrom(
-        this.httpService.post(`${this.baseUrl}/order/update-customer-camps`, { camp_unique_id, ...payload },{
+        this.httpService.post(`${this.baseUrl}/order/update-customer-camps`, { camp_unique_id, ...payload }, {
           headers
         }),
       );
@@ -229,7 +211,7 @@ export class SamplifyService {
   async deleteCustomerCamp(camp_unique_id: string) {
     try {
       const res = await firstValueFrom(
-        this.httpService.post(`${this.baseUrl}/order/delete-customer-camps`, {camp_unique_id}, {
+        this.httpService.post(`${this.baseUrl}/order/delete-customer-camps`, { camp_unique_id }, {
           headers: this.getHeaders(),
         }),
       );
@@ -246,7 +228,7 @@ export class SamplifyService {
     const camps = await this.campListModel.findAll();
 
     for (const camp of camps) {
-      if(!camp.camp_unique_id){
+      if (!camp.camp_unique_id) {
         await this.createCustomerCamp({
           camp_ref_id: camp.camp_ref_id,
           date: camp.scheduled_on,
@@ -260,37 +242,37 @@ export class SamplifyService {
         });
       }
     }
-    return {success: true , message: 'Camp list from DB created to Samplify'};
+    return { success: true, message: 'Camp list from DB created to Samplify' };
   }
 
-  async createCamp_to_Samplify(camp_id: number ) {
+  async createCamp_to_Samplify(camp_id: number) {
     const camp = await this.campListModel.findOne({ where: { id: camp_id } });
-    if(!camp){
+    if (!camp) {
       throw new NotFoundException('Camp not found');
     }
-    if (camp.camp_unique_id){
-      return {success: true , message: 'Camp already created to Samplify'};
+    if (camp.camp_unique_id) {
+      return { success: true, message: 'Camp already created to Samplify' };
     }
     const data = await this.createCustomerCamp({
       camp_ref_id: camp.camp_ref_id,
       date: camp.scheduled_on,
       address: camp.location_text,
-        camp_spoc_name: camp.camp_spoc_name,
-        camp_spoc_phone: camp.camp_spoc_phone,
-        camp_spoc_email: camp.camp_spoc_email,
-        pincode: camp.pincode,
-        corporate_name: camp.corporate_name,
-        remark: camp.remark ?? "Camp added by LMC",
-      });
+      camp_spoc_name: camp.camp_spoc_name,
+      camp_spoc_phone: camp.camp_spoc_phone,
+      camp_spoc_email: camp.camp_spoc_email,
+      pincode: camp.pincode,
+      corporate_name: camp.corporate_name,
+      remark: camp.remark ?? "Camp added by LMC",
+    });
 
-    return {success: true , message: 'Camp created to Samplify' , data:data};
+    return { success: true, message: 'Camp created to Samplify', data: data };
   }
 
 
   async updateCamp_to_Samplify() {
     const camps = await this.campListModel.findAll();
     for (const camp of camps) {
-      if(camp.camp_unique_id){
+      if (camp.camp_unique_id) {
         await this.updateCustomerCamp(camp.camp_unique_id, {
           camp_ref_id: camp.camp_ref_id,
           date: camp.scheduled_on,
@@ -304,14 +286,14 @@ export class SamplifyService {
         });
       }
     }
-    return {success: true , message: 'Camp list from DB updated to Samplify'};
+    return { success: true, message: 'Camp list from DB updated to Samplify' };
   }
 
 
-  async updatePhlebotomistAndBarcodeData(payload: { 
-    camp_unique_id: string; 
-    camp_patients: any[]; 
-    phlebo_details: phelboDTO[] 
+  async updatePhlebotomistAndBarcodeData(payload: {
+    camp_unique_id: string;
+    camp_patients: any[];
+    phlebo_details: phelboDTO[]
   }) {
     const { camp_unique_id, camp_patients, phlebo_details } = payload;
     this.logger.log(`[updatePhlebotomistAndBarcodeData] Step 1: Request received for camp ${camp_unique_id || 'unknown'}`);
@@ -374,7 +356,7 @@ export class SamplifyService {
       );
       throw new InternalServerErrorException('Failed to enqueue camp update');
     }
-    
+
     // Return only serializable summary fields; do not echo the full request payload.
     return {
       success: true,
@@ -383,7 +365,7 @@ export class SamplifyService {
       patient_count: safePatients.length,
       phlebotomist_count: safePhlebotomists.length,
     };
-    
+
   }
 
 
@@ -392,9 +374,9 @@ export class SamplifyService {
     if (!camp) throw new NotFoundException('Camp not found');
     const driver = await this.driverModel.findByPk(driver_id);
     if (!driver) throw new NotFoundException('Driver not found');
-    const patient = await this.campListItemModel.findOne({ where: { driver_id , camp_id:camp.id} });
+    const patient = await this.campListItemModel.findOne({ where: { driver_id, camp_id: camp.id } });
     if (!patient) throw new NotFoundException('Patient not found');
-    
+
     const first_name = driver.name.split(' ')[0];
     const last_name = driver.name.split(' ')[1];
     const patients = [{ patient_ref_id: driver.employeeId, first_name: first_name, last_name: last_name, gender: driver.gender, age: driver.age }]
@@ -463,48 +445,48 @@ export class SamplifyService {
     if (!camp.center_id || camp.center_id !== center_id) throw new NotFoundException('Camp not found');
 
     // find the drivers where there is added_to_samplify is false
-    const drivers = await this.campListItemModel.findAll({ where: { camp_id:camp.id , added_to_samplify: false } });
+    const drivers = await this.campListItemModel.findAll({ where: { camp_id: camp.id, added_to_samplify: false } });
     console.log(drivers);
-    if (!drivers || drivers.length === 0) return { success: false , message: 'No drivers found to be added.. to Samplify' };
+    if (!drivers || drivers.length === 0) return { success: false, message: 'No drivers found to be added.. to Samplify' };
 
     const driver_ids = drivers.map((driver) => driver.driver_id);
     const res = await this.addCampPatientId(driver_ids, camp.camp_unique_id);
     return res;
-    
+
   }
-    
+
 
   async sendBarCodeToSamplify(driver_id: number, camp_unique_id: string) {
     // 1. Find Camp
     const camp = await this.campListModel.findOne({ where: { camp_unique_id } });
     if (!camp) throw new NotFoundException('Camp not found');
-  
+
     // 2. Find Driver
     const driver = await this.driverModel.findByPk(driver_id);
     if (!driver) throw new NotFoundException('Driver not found');
-  
+
     // 3. Find Patient (camp_list_item) linked to driver + camp
     const patient = await this.campListItemModel.findOne({
       where: { driver_id, camp_id: camp.id },
     });
     if (!patient) throw new NotFoundException('Patient not found for this driver and camp');
-  
+
     // 4. Get all barcodes for this patient
     const barcodes = await this.barcodeModel.findAll({
       where: { camp_list_item_id: patient.id },
       attributes: ['code', 'test_name'],
     });
-  
+
     if (barcodes.length === 0) {
-      return { success: false , message: 'No barcodes found for this patient' };
+      return { success: false, message: 'No barcodes found for this patient' };
     }
-  
+
     // 5. Map barcodes to Samplify format
     const specimens = barcodes.map(barcode => ({
       barcode: barcode.code,
       name: barcode.test_name,
     }));
-  
+
     // 6. Split name safely
     const nameParts = (driver.name || 'Unknown Driver').trim().split(/\s+/);
     const first_name = nameParts[0] || 'Unknown';
@@ -512,7 +494,7 @@ export class SamplifyService {
 
     const trf_barcode = patient.trf_number;
     const sample_collection_time = new Date().toISOString();
-  
+
     // 7. Prepare Samplify payload
     const samplifyPayload = {
       patient_ref_id: driver.employeeId,
@@ -526,7 +508,7 @@ export class SamplifyService {
       trf_barcode,
       sample_collection_time,
     };
-  
+
     // 8. Send to Samplify
     try {
       await this.updateCampPatients(camp_unique_id, driver.employeeId, samplifyPayload);
@@ -545,7 +527,7 @@ export class SamplifyService {
         code: typeof errorResponse === 'object' && errorResponse !== null ? (errorResponse as any).code : undefined,
       };
     }
-  
+
     return {
       success: true,
       message: 'Barcodes sent to Samplify successfully',
@@ -565,20 +547,20 @@ export class SamplifyService {
     const patients = await this.campListItemModel.findAll({ where: { camp_id: camp.id } });
     const ress = [];
     for (const patient of patients) {
-      const res = await this.sendBarCodeToSamplify(patient.driver_id, camp.camp_unique_id);    
+      const res = await this.sendBarCodeToSamplify(patient.driver_id, camp.camp_unique_id);
       ress.push(res);
       if (res.success) {
         camp.statusSamplify = "BarCodeSent";
         await camp.save();
       }
     }
-  
-    
+
+
     const failedResults = ress.filter((result) => !result?.success);
     const successCount = ress.length - failedResults.length;
     const isSuccess = failedResults.length === 0;
     const firstError = failedResults[0]?.error || failedResults[0]?.message;
-    
+
     return {
       success: isSuccess,
       message: isSuccess
@@ -591,7 +573,4 @@ export class SamplifyService {
       data: ress,
     };
   }
-
-
-
 }

@@ -12,7 +12,7 @@ import { User } from '../../models/User';
 import { driverhealthcheckup } from '../../models/DriverHealthCheckup';
 import { AddCampItemDto, UpdateCampItemDto, CreateBarcodeDto } from './camp.dto';
 import { parseCsv } from '../../utils/csv-parse.util';
-import { CreateCustomerCampDto } from '../Samplify/samplify.dto';
+import { CreateCustomerCampDto, UpdateCustomerCampDto } from '../Samplify/samplify.dto';
 import { DriverMasterService } from '../DriverMaster/DriverMaster.service';
 
 @Injectable()
@@ -144,7 +144,7 @@ export class CampService {
     return camp;
   }
 
-  async updateCamp(campId: number, centerIdScope: number, data: CreateCustomerCampDto): Promise<CampList> {
+  async updateCamp(campId: number, centerIdScope: number, data: UpdateCustomerCampDto): Promise<CampList> {
     const camp = await this.campListModel.findByPk(campId);
     if (!camp || camp.center_id !== centerIdScope) throw new NotFoundException('Camp not found');
     

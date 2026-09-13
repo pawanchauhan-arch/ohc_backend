@@ -104,6 +104,9 @@ export class LokiLoggerService implements OnModuleDestroy {
   }
 
   private write(level: 'error' | 'warn' | 'info' | 'debug' | 'silly', message: any, meta: Record<string, any> = {}) {
+    if (!this.logger || this.logger.transports.length === 0) {
+      return;
+    }
     this.logger.log(
       level,
       JSON.stringify({

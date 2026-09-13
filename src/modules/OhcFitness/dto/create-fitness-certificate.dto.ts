@@ -1,10 +1,16 @@
+import { Transform } from 'class-transformer';
 import {
-  IsBoolean,
   IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
 } from 'class-validator';
+
+const ToOptionalString = () =>
+  Transform(({ value }) => {
+    if (value === null || value === undefined || value === '') return value;
+    return String(value);
+  });
 
 export class CreateFitnessCertificateDto {
   @IsOptional()
@@ -14,6 +20,14 @@ export class CreateFitnessCertificateDto {
   @IsOptional()
   @IsString()
   project_name?: string;
+
+  @IsOptional()
+  @IsInt()
+  doctor_id?: number;
+
+  @IsOptional()
+  @IsString()
+  doctor_name?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -43,9 +57,9 @@ export class CreateFitnessCertificateDto {
   @IsNotEmpty()
   residence_address: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  date_of_birth: string;
+  date_of_birth?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -60,18 +74,22 @@ export class CreateFitnessCertificateDto {
   reason_revoked?: string;
 
   @IsOptional()
+  @ToOptionalString()
   @IsString()
   height?: string;
 
   @IsOptional()
+  @ToOptionalString()
   @IsString()
   weight?: string;
 
   @IsOptional()
+  @ToOptionalString()
   @IsString()
   blood_pressure?: string;
 
   @IsOptional()
+  @ToOptionalString()
   @IsString()
   pulse?: string;
 
@@ -140,56 +158,56 @@ export class CreateFitnessCertificateDto {
   prev_others?: string;
 
   @IsOptional()
-  @IsBoolean()
-  op_general_physique?: boolean;
+  @IsString()
+  op_general_physique?: string;
 
   @IsOptional()
-  @IsBoolean()
-  op_vision?: boolean;
+  @IsString()
+  op_vision?: string;
 
   @IsOptional()
-  @IsBoolean()
-  op_hearing?: boolean;
+  @IsString()
+  op_hearing?: string;
 
   @IsOptional()
-  @IsBoolean()
-  op_breathing?: boolean;
+  @IsString()
+  op_breathing?: string;
 
   @IsOptional()
-  @IsBoolean()
-  op_upper_limbs?: boolean;
+  @IsString()
+  op_upper_limbs?: string;
 
   @IsOptional()
-  @IsBoolean()
-  op_lower_limbs?: boolean;
+  @IsString()
+  op_lower_limbs?: string;
 
   @IsOptional()
-  @IsBoolean()
-  op_spine?: boolean;
+  @IsString()
+  op_spine?: string;
 
   @IsOptional()
-  @IsBoolean()
-  op_general_mental_alertness?: boolean;
+  @IsString()
+  op_general_mental_alertness?: string;
 
   @IsOptional()
   @IsString()
   op_other_examination?: string;
 
   @IsOptional()
-  @IsBoolean()
-  fh_skin_diseases?: boolean;
+  @IsString()
+  fh_skin_diseases?: string;
 
   @IsOptional()
-  @IsBoolean()
-  fh_personal_hygiene?: boolean;
+  @IsString()
+  fh_personal_hygiene?: string;
 
   @IsOptional()
   @IsString()
   fh_chest_xray?: string;
 
   @IsOptional()
-  @IsBoolean()
-  welder_respiratory_diseases?: boolean;
+  @IsString()
+  welder_respiratory_diseases?: string;
 
   @IsOptional()
   @IsString()

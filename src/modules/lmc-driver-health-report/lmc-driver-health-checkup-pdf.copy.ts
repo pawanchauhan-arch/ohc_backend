@@ -1,5 +1,7 @@
 import * as puppeteer from 'puppeteer';
 import type { Logger } from '@nestjs/common';
+import * as fs from 'fs';
+import * as path from 'path';
 
 /** Same shape as {@link HealthCheckupService.getDriverHealthReportDownloadPayload}. */
 export type LmcHealthReportDownloadPayload = {
@@ -704,6 +706,17 @@ export async function buildLmcHealthCheckupMainPdfFromPayload(
     const driverName = d.driver?.name ?? 'N/A';
     const driverExternalId = d.driver?.external_id ?? 'N/A';
     const clientName = d.CETMANAGEMENT?.name ?? 'N/A';
+    let logoBase64 = '';
+    try {
+      const logoPath = path.resolve(process.cwd(), 'assets', 'Last-Mile-Care_logo.jpg');
+      if (fs.existsSync(logoPath)) {
+        logoBase64 = `data:image/jpeg;base64,${fs.readFileSync(logoPath).toString('base64')}`;
+      }
+    } catch (e) {
+      // Fallback
+    }
+    const logoSrc = logoBase64 || 'https://mediaandfiles.s3.amazonaws.com/uploads/1771324218657-Last-Mile-Care_logo.jpg';
+
     // Replace all placeholders
     const html = `
 <!DOCTYPE html>
@@ -713,11 +726,11 @@ export async function buildLmcHealthCheckupMainPdfFromPayload(
   <title>Health Report - ${driverExternalId}</title>
   <style>
     body { margin: 0; padding: 40px 50px; font-family: Arial, sans-serif; font-size: 13px; color: #000; }
-    .container { { max-width: 900px; margin: 0 auto; }
-    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #000; padding-bottom: 15px; margin-bottom: 25px; }
-    .logo-left { width: 140px; }
-    .logo-right { width: 120px; }
-    .center-title { text-align: center; flex: 1; margin: 0 30px; }
+    .container { max-width: 900px; margin: 0 auto; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #000; padding-bottom: 15px; margin-bottom: 25px; }
+    .logo-left { width: 140px; height: auto; max-height: 80px; object-fit: contain; flex-shrink: 0; }
+    .logo-right { width: 120px; height: auto; object-fit: contain; flex-shrink: 0; }
+    .center-title { text-align: center; flex: 1; margin: 0 20px; }
     .center-title h1 { font-size: 26px; font-weight: bold; margin: 0 0 8px 0; color: #003087; }
     .center-info { font-size: 13px; line-height: 1.7; }
     .center-info a { color: #003087; text-decoration: none; }
@@ -752,7 +765,7 @@ export async function buildLmcHealthCheckupMainPdfFromPayload(
 <body>
   <div class="container">
     <div class="header">
-      <img src="https://mediaandfiles.s3.amazonaws.com/uploads/1771324218657-Last-Mile-Care_logo.jpg" class="logo-left">
+      <img src="${logoSrc}" class="logo-left">
       <div class="center-title">
         <h1>Last Mile Care Private Limited</h1>
         <div class="center-info">

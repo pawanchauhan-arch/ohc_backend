@@ -309,8 +309,8 @@ export const generatePrescriptionPdf = async (
       // Left column - Doctor Information
       doc.y = currentY;
       doc.x = leftMargin;
-      doc.fontSize(11).font('Helvetica-Bold').text('Doctor Information:');
-      doc.fontSize(10).font('Helvetica');
+      doc.fontSize(10).font('Helvetica-Bold').text('Doctor Information:');
+      doc.fontSize(9).font('Helvetica');
       doc.text(`Name: ${doctor.user?.username || '-'}`);
       doc.text(`Qualification: ${doctor.qualification || '-'}`);
       doc.text(`Registration No: ${doctor.registration_number || '-'}`);
@@ -318,8 +318,8 @@ export const generatePrescriptionPdf = async (
       // Right column - Patient Information
       doc.y = currentY;
       doc.x = leftMargin + contentWidth / 2 + 20;
-      doc.fontSize(11).font('Helvetica-Bold').text('Patient Information:', { align: 'right' });
-      doc.fontSize(10).font('Helvetica');
+      doc.fontSize(10).font('Helvetica-Bold').text('Patient Information:', { align: 'right' });
+      doc.fontSize(9).font('Helvetica');
       doc.text(`ID: ${patient.driverId || patient.id || '-'}`, { align: 'right' });
       doc.text(`Name: ${patient.name || '-'}`, { align: 'right' });
       doc.text(`Age: ${resolvePatientAge(patient)}`, { align: 'right' });
@@ -342,15 +342,15 @@ export const generatePrescriptionPdf = async (
       }
 
       // Update Y position for next section
-      currentY = Math.max(doc.y, currentY) + 5;
+      currentY = Math.max(doc.y, currentY) + 4.5;
       drawHorizontalLine(currentY);
-      currentY += 5;
+      currentY += 4.5;
 
       // Vitals section
       doc.y = currentY;
       doc.x = leftMargin;
-      doc.fontSize(11).font('Helvetica-Bold').text('Vitals:');
-      currentY = doc.y + 5;
+      doc.fontSize(10).font('Helvetica-Bold').text('Vitals:');
+      currentY = doc.y + 3;
       
       // Parse vitals data with proper typing
       const vitalsData: VitalsData = prescription.vitals as VitalsData || {};
@@ -478,16 +478,18 @@ export const generatePrescriptionPdf = async (
         ];
 
         // --- Calculate header row height dynamically ---
+        doc.fontSize(8.5).font('Helvetica-Bold');
         const headerHeights = vitalsHeaders.map(header =>
-          doc.heightOfString(header, { width: colWidth - 10 })
+          doc.heightOfString(header, { width: colWidth - 8 })
         );
-        const headerRowHeight = Math.max(20, ...headerHeights.map(h => h + 10));
+        const headerRowHeight = Math.max(16, ...headerHeights.map(h => h + 6));
 
         // --- Calculate value row height dynamically ---
+        doc.fontSize(9).font('Helvetica');
         const valueHeights = vitalsValues.map(value =>
-          doc.heightOfString(value, { width: colWidth - 10 })
+          doc.heightOfString(value, { width: colWidth - 8 })
         );
-        const valueRowHeight = Math.max(20, ...valueHeights.map(h => h + 10));
+        const valueRowHeight = Math.max(16, ...valueHeights.map(h => h + 6));
 
         const totalTableHeight = headerRowHeight + valueRowHeight;
 
@@ -507,81 +509,81 @@ export const generatePrescriptionPdf = async (
            .stroke();
 
         // --- Draw headers, vertically centered ---
-        doc.fontSize(9).font('Helvetica-Bold');
+        doc.fontSize(8.5).font('Helvetica-Bold');
         for (let i = 0; i < numCols; i++) {
           const textHeight = headerHeights[i];
           const yOffset = tableTop + (headerRowHeight - textHeight) / 2;
-          doc.text(vitalsHeaders[i], leftMargin + (colWidth * i) + 5, yOffset, {
-            width: colWidth - 10,
+          doc.text(vitalsHeaders[i], leftMargin + (colWidth * i) + 4, yOffset, {
+            width: colWidth - 8,
             align: 'center'
           });
         }
 
         // --- Draw values, vertically centered ---
-        doc.fontSize(10).font('Helvetica');
+        doc.fontSize(9).font('Helvetica');
         for (let i = 0; i < numCols; i++) {
           const textHeight = valueHeights[i];
           const yOffset = tableTop + headerRowHeight + (valueRowHeight - textHeight) / 2;
-          doc.text(vitalsValues[i], leftMargin + (colWidth * i) + 5, yOffset, {
-            width: colWidth - 10,
+          doc.text(vitalsValues[i], leftMargin + (colWidth * i) + 4, yOffset, {
+            width: colWidth - 8,
             align: 'center'
           });
         }
 
-        currentY = tableTop + totalTableHeight + 5; // Space after vitals table
+        currentY = tableTop + totalTableHeight + 4.5; // Space after vitals table
       } catch (err) {
         console.error('Error creating vitals table:', err);
         doc.text('Unable to display vitals table');
-        currentY = doc.y + 5;
+        currentY = doc.y + 4.5;
       }
 
       // Chief Complaint section
       drawHorizontalLine(currentY);
-      currentY += 5;
+      currentY += 4.5;
       doc.y = currentY;
       doc.x = leftMargin;
-      doc.fontSize(11).font('Helvetica-Bold').text('Chief Complaint:');
-      currentY = doc.y + 5;
+      doc.fontSize(10).font('Helvetica-Bold').text('Chief Complaint:');
+      currentY = doc.y + 3;
       doc.y = currentY;
-      doc.fontSize(10).font('Helvetica');
+      doc.fontSize(9).font('Helvetica');
       doc.text(Array.isArray(prescription.chief_complaints) 
         ? prescription.chief_complaints.join(', ') 
         : (prescription.chief_complaints || "-"));
-      currentY = doc.y + 5;
+      currentY = doc.y + 4.5;
       drawHorizontalLine(currentY);
-      currentY += 5;
+      currentY += 4.5;
 
       // Diagnosis section
       doc.y = currentY;
       doc.x = leftMargin;
-      doc.fontSize(11).font('Helvetica-Bold').text('Diagnosis:');
-      currentY = doc.y + 5;
+      doc.fontSize(10).font('Helvetica-Bold').text('Diagnosis:');
+      currentY = doc.y + 3;
       doc.y = currentY;
-      doc.fontSize(10).font('Helvetica');
+      doc.fontSize(9).font('Helvetica');
       doc.text(prescription.diagnose || "-");
-      currentY = doc.y + 5;
+      currentY = doc.y + 4.5;
       drawHorizontalLine(currentY);
-      currentY += 5;
+      currentY += 4.5;
 
       // Drug Allergies section
       doc.y = currentY;
       doc.x = leftMargin;
-      doc.fontSize(11).font('Helvetica-Bold').text('Drug Allergies:');
-      currentY = doc.y + 5;
+      doc.fontSize(10).font('Helvetica-Bold').text('Drug Allergies:');
+      currentY = doc.y + 3;
       doc.y = currentY;
-      doc.fontSize(10).font('Helvetica');
+      doc.fontSize(9).font('Helvetica');
       doc.text(Array.isArray(prescription.drug_allergies)
         ? prescription.drug_allergies.join(', ')
         : (prescription.drug_allergies || "-"));
-      currentY = doc.y + 5;
+      currentY = doc.y + 4.5;
       drawHorizontalLine(currentY);
-      currentY += 5;
+      currentY += 4.5;
 
       // Prescribed Medicines section
       doc.y = currentY;
       doc.x = leftMargin;
-      doc.fontSize(11).font('Helvetica-Bold').text('Prescribed Medicines:');
-      currentY = doc.y + 5;
+      doc.fontSize(10).font('Helvetica-Bold').text('Prescribed Medicines:');
+      currentY = doc.y + 3;
 
       // Create medicines table
       try {
@@ -603,38 +605,39 @@ export const generatePrescriptionPdf = async (
           let tableY = tableTop;
           
           // Header row
-          doc.fontSize(9).font('Helvetica-Bold');
+          doc.fontSize(8.5).font('Helvetica-Bold');
+          const headerRowHeight = 16;
           
           // Draw header row rectangle
-          doc.rect(leftMargin, tableY, tableWidth, 20).stroke();
+          doc.rect(leftMargin, tableY, tableWidth, headerRowHeight).stroke();
           
           // Draw column dividers in header
           let xPos = leftMargin;
           for (let i = 0; i < colWidths.length - 1; i++) {
             xPos += colWidths[i];
-            doc.moveTo(xPos, tableY).lineTo(xPos, tableY + 20).stroke();
+            doc.moveTo(xPos, tableY).lineTo(xPos, tableY + headerRowHeight).stroke();
           }
           
           // Add header texts
           xPos = leftMargin;
-          doc.text('S.No', xPos + 5, tableY + 5, { width: colWidths[0] - 10, align: 'center' });
+          doc.text('S.No', xPos + 3, tableY + 3, { width: colWidths[0] - 6, align: 'center' });
           xPos += colWidths[0];
-          doc.text('Medicine Type', xPos + 5, tableY + 5, { width: colWidths[1] - 10, align: 'center' });
+          doc.text('Medicine Type', xPos + 3, tableY + 3, { width: colWidths[1] - 6, align: 'center' });
           xPos += colWidths[1];
-          doc.text('Medicine Name', xPos + 5, tableY + 5, { width: colWidths[2] - 10, align: 'center' });
+          doc.text('Medicine Name', xPos + 3, tableY + 3, { width: colWidths[2] - 6, align: 'center' });
           xPos += colWidths[2];
-          doc.text('Dosage', xPos + 5, tableY + 5, { width: colWidths[3] - 10, align: 'center' });
+          doc.text('Dosage', xPos + 3, tableY + 3, { width: colWidths[3] - 6, align: 'center' });
           xPos += colWidths[3];
-          doc.text('Frequency', xPos + 5, tableY + 5, { width: colWidths[4] - 10, align: 'center' });
+          doc.text('Frequency', xPos + 3, tableY + 3, { width: colWidths[4] - 6, align: 'center' });
           xPos += colWidths[4];
-          doc.text('Duration', xPos + 5, tableY + 5, { width: colWidths[5] - 10, align: 'center' });
+          doc.text('Duration', xPos + 3, tableY + 3, { width: colWidths[5] - 6, align: 'center' });
           xPos += colWidths[5];
-          doc.text('Instructions', xPos + 5, tableY + 5, { width: colWidths[6] - 10, align: 'center' });
+          doc.text('Instructions', xPos + 3, tableY + 3, { width: colWidths[6] - 6, align: 'center' });
           
-          tableY += 20; // Move to next row
+          tableY += headerRowHeight; // Move to next row
           
           // Data rows
-          doc.fontSize(10).font('Helvetica');
+          doc.fontSize(9).font('Helvetica');
           
           for (let i = 0; i < medicines.length; i++) {
             const medicine = medicines[i];
@@ -665,10 +668,10 @@ export const generatePrescriptionPdf = async (
 
             // Calculate the height needed for each cell
             const cellHeights = cellValues.map((value, idx) =>
-              doc.heightOfString(value, { width: colWidths[idx] - 10 })
+              doc.heightOfString(value, { width: colWidths[idx] - 6 })
             );
             // Set row height based on the tallest cell, plus padding
-            const rowHeight = Math.max(20, ...cellHeights.map(h => h + 10));
+            const rowHeight = Math.max(16, ...cellHeights.map(h => h + 6));
 
             // Draw row rectangle
             doc.rect(leftMargin, tableY, tableWidth, rowHeight).stroke();
@@ -687,8 +690,8 @@ export const generatePrescriptionPdf = async (
               const cellHeight = cellHeights[j];
               // Calculate vertical offset for centering
               const yOffset = tableY + (rowHeight - cellHeight) / 2;
-              doc.text(cellText, xPos + 5, yOffset, {
-                width: colWidths[j] - 10,
+              doc.text(cellText, xPos + 3, yOffset, {
+                width: colWidths[j] - 6,
                 align: 'center'
               });
               xPos += colWidths[j];
@@ -698,126 +701,135 @@ export const generatePrescriptionPdf = async (
             tableY += rowHeight;
           }
           
-          currentY = tableY + 5; // Space after medicines table
+          currentY = tableY + 4.5; // Space after medicines table
         } else {
-          doc.fontSize(10).font('Helvetica').text('No medicines prescribed');
-          currentY = doc.y + 5;
+          doc.fontSize(9).font('Helvetica').text('No medicines prescribed');
+          currentY = doc.y + 4.5;
         }
       } catch (err) {
         console.error('Error creating medicines table:', err);
         doc.text('Unable to display medicines table');
-        currentY = doc.y + 5;
+        currentY = doc.y + 4.5;
       }
       
       drawHorizontalLine(currentY);
-      currentY += 5;
+      currentY += 4.5;
 
       // Lab Tests section if available
       if (prescription.lab || prescription.other_lab) {
         doc.y = currentY;
         doc.x = leftMargin;
-        doc.fontSize(11).font('Helvetica-Bold').text('Lab Tests:');
-        currentY = doc.y + 5;
+        doc.fontSize(10).font('Helvetica-Bold').text('Lab Tests:');
+        currentY = doc.y + 3;
         doc.y = currentY;
-        doc.fontSize(10).font('Helvetica');
+        doc.fontSize(9).font('Helvetica');
         
         const labTests = [prescription.lab, prescription.other_lab]
           .filter(Boolean)
           .join(', ');
         
         doc.text(labTests || '-');
-        currentY = doc.y + 5;
+        currentY = doc.y + 4.5;
         drawHorizontalLine(currentY);
-        currentY += 5;
+        currentY += 4.5;
       }
       
       // Preventive Advice section if available
       if (prescription.preventive_advice || prescription.instructions) {
         doc.y = currentY;
         doc.x = leftMargin;
-        doc.fontSize(11).font('Helvetica-Bold').text('Preventive Advice:');
-        currentY = doc.y + 5;
+        doc.fontSize(10).font('Helvetica-Bold').text('Preventive Advice:');
+        currentY = doc.y + 3;
         doc.y = currentY;
-        doc.fontSize(10).font('Helvetica');
+        doc.fontSize(9).font('Helvetica');
         // Prefer preventive_advice, fallback to instructions
         const adviceText = normalizeAdviceField(prescription.preventive_advice) !== '-' ?
           normalizeAdviceField(prescription.preventive_advice) :
           normalizeAdviceField(prescription.instructions);
         doc.text(adviceText);
-        currentY = doc.y + 5;
+        currentY = doc.y + 4.5;
         drawHorizontalLine(currentY);
-        currentY += 5;
+        currentY += 4.5;
       }
 
       // Follow-up section
       if (prescription.follow_up) {
         doc.y = currentY;
         doc.x = leftMargin;
-        doc.fontSize(11).font('Helvetica-Bold').text('Follow-up:');
-        currentY = doc.y + 5;
+        doc.fontSize(10).font('Helvetica-Bold').text('Follow-up:');
+        currentY = doc.y + 3;
         doc.y = currentY;
-        doc.fontSize(10).font('Helvetica');
+        doc.fontSize(9).font('Helvetica');
         const followUpText = prescription.follow_up ? formatDate(prescription.follow_up) : '-';
         doc.text(`Next Visit: ${followUpText}`);
-        currentY = doc.y + 5;
+        currentY = doc.y + 4.5;
         drawHorizontalLine(currentY);
-        currentY += 5;
+        currentY += 4.5;
       }
 
       // Fitness status section (hidden for Latehar / govJharkhand template)
       if (template !== 'govJharkhand') {
         doc.y = currentY;
         doc.x = leftMargin;
-        doc.fontSize(11).font('Helvetica-Bold').text('Fitness Status:');
-        currentY = doc.y + 5;
+        doc.fontSize(10).font('Helvetica-Bold').text('Fitness Status:');
+        currentY = doc.y + 3;
         doc.y = currentY;
-        doc.fontSize(10).font('Helvetica');
+        doc.fontSize(9).font('Helvetica');
         doc.text(prescription.fitness_status || '-');
-        currentY = doc.y + 5;
+        currentY = doc.y + 4.5;
         drawHorizontalLine(currentY);
-        currentY += 5;
+        currentY += 4.5;
       }
 
-      // Doctor Signature section
-      // doc.y = currentY;
-      // doc.x = leftMargin;
-      // doc.fontSize(11).font('Helvetica-Bold').text('Doctor Signature:');
-      // currentY = doc.y + 5;
-      
-      // Right-align signature
-      const signatureX = rightMargin - 120;
-      const doctorName = doctor.user?.username || 'Doctor';
+      // Footer Block (Doctor Signature & Disclaimer)
+      const footerBlockHeight = 105;
+      const pageBottomLimit = doc.page.height - doc.page.margins.bottom - 10;
 
-      // Add signature if available
+      if (currentY + footerBlockHeight > pageBottomLimit) {
+        doc.addPage();
+        currentY = doc.page.margins.top || 40;
+      }
+
+      const sigWidth = 140;
+      const signatureX = rightMargin - sigWidth;
+      const doctorName = doctor.user?.username || 'Doctor';
+      const sigStartY = currentY;
+
       if (signatureBuffer) {
         try {
-          doc.image(signatureBuffer, signatureX, currentY, { fit: [120, 40] });
-          doc.text('Doctor\'s Signature', signatureX, currentY + 45, { width: 120, align: 'center' });
-          doc.text(doctorName, signatureX, currentY + 60, { width: 120, align: 'center' });
-          currentY += 80; // Increased from 60 to 80 to add more space after doctor's name
+          doc.image(signatureBuffer, signatureX, sigStartY, {
+            fit: [sigWidth, 30],
+            align: 'center',
+            valign: 'center',
+          });
         } catch (e) {
           console.error('Error adding signature to document:', e);
-          doc.text('Doctor\'s Signature', signatureX, currentY + 15, { width: 120, align: 'center' });
-          doc.text(doctorName, signatureX, currentY + 30, { width: 120, align: 'center' });
-          currentY += 50; // Increased from 30 to 50 to add more space after doctor's name
         }
-      } else {
-        doc.text('Doctor\'s Signature', signatureX, currentY + 15, { width: 120, align: 'center' });
-        doc.text(doctorName, signatureX, currentY + 30, { width: 120, align: 'center' });
-        currentY += 50; // Increased from 30 to 50 to add more space after doctor's name
       }
 
-      // Add the disclaimer right after the signature with minimal spacing
-      currentY += 10; // Just a small gap after signature
-      const disclaimerY = currentY;
-      
-      // Disclaimer line
-      drawHorizontalLine(disclaimerY - 5);
-      
-      // Disclaimer text
-      doc.fontSize(8).font('Helvetica-Bold').text('DISCLAIMER:', leftMargin, disclaimerY, { continued: true });
-      doc.fontSize(8).font('Helvetica').text(' The prescription is generated based on the health parameters checked during the visit and the consultation with doctor using online media.');
-      doc.fontSize(8).font('Helvetica').text('This prescription is valid in India only. Please visit a nearby doctor for further evaluation and treatment, if required.');
+      const textY = sigStartY + (signatureBuffer ? 34 : 5);
+      doc.fontSize(9).font('Helvetica-Bold').text("Doctor's Signature", signatureX, textY, { width: sigWidth, align: 'center' });
+      doc.fontSize(9).font('Helvetica').text(doctorName, signatureX, textY + 12, { width: sigWidth, align: 'center' });
+
+      currentY = textY + 26;
+
+      // Add Disclaimer section right below signature
+      drawHorizontalLine(currentY);
+      currentY += 6;
+
+      const disclaimerLine1Part1 = 'DISCLAIMER: ';
+      const disclaimerLine1Part2 = 'The prescription is generated based on the health parameters checked during the visit and the consultation with doctor using';
+      const disclaimerLine2 = 'online media.';
+      const disclaimerLine3 = 'This prescription is valid in India only. Please visit a nearby doctor for further evaluation and treatment, if required.';
+
+      doc.fontSize(8).font('Helvetica-Bold').text(disclaimerLine1Part1, leftMargin, currentY, { continued: true });
+      doc.fontSize(8).font('Helvetica').text(disclaimerLine1Part2);
+
+      currentY = doc.y + 2;
+      doc.fontSize(8).font('Helvetica').text(disclaimerLine2, leftMargin, currentY);
+
+      currentY = doc.y + 2;
+      doc.fontSize(8).font('Helvetica').text(disclaimerLine3, leftMargin, currentY);
 
       // Finalize the PDF
       doc.end();

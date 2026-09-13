@@ -16,9 +16,6 @@ const esc = (value?: string | number | null) => {
 
 const val = (value?: string | number | null) => esc(value) || '&nbsp;';
 
-const isChecked = (value?: boolean | string | number | null) =>
-  value === true || value === 'true' || value === 1;
-
 const displayHistory = (value?: string | null) => {
   if (!value) return '';
   const v = String(value).toLowerCase();
@@ -32,13 +29,13 @@ const underline = (text?: string | number | null, minWidth = '120px') =>
 const dotted = (text?: string | number | null) =>
   `<span class="dotted">${val(text)}</span>`;
 
-const checkbox = (checked: boolean) =>
-  `<span class="cb">${checked ? '&#10003;' : ''}</span>`;
-
-const checkLine = (checked: boolean, content: string) =>
-  `<p class="check-line">${checkbox(checked)}<span class="check-text">${content}</span></p>`;
-
 const textLine = (content: string) => `<p class="plain-line">${content}</p>`;
+
+const fieldText = (value?: boolean | string | number | null) => {
+  if (value === true) return 'Yes';
+  if (value === false || value === null || value === undefined) return '';
+  return String(value);
+};
 
 export const buildFitnessCertificateHtml = (
   cert: any,
@@ -108,8 +105,18 @@ export const buildFitnessCertificateHtml = (
       min-height: 297mm;
       padding: 15mm 20mm 14mm;
       page-break-after: always;
+      box-sizing: border-box;
     }
     .page:last-child { page-break-after: auto; }
+    .page-one {
+      display: flex;
+      flex-direction: column;
+    }
+    .page-body { flex: 1 1 auto; }
+    .page-footer {
+      margin-top: auto;
+      padding-top: 24px;
+    }
     .rule-ref { text-align: center; font-size: 11px; margin-bottom: 10px; }
     .title {
       text-align: center;
@@ -155,8 +162,9 @@ export const buildFitnessCertificateHtml = (
     .sign-row {
       display: flex;
       justify-content: space-between;
-      margin-top: 44px;
+      align-items: flex-end;
       gap: 20px;
+      margin-bottom: 28px;
     }
     .sign-left, .sign-right {
       width: 50%;
@@ -165,7 +173,13 @@ export const buildFitnessCertificateHtml = (
       line-height: 1.4;
     }
     .sign-right { text-align: right; }
-    .note { margin-top: 36px; font-size: 11px; line-height: 1.45; }
+    .doctor-name {
+      font-weight: 700;
+      font-size: 11px;
+      margin-bottom: 28px;
+      min-height: 16px;
+    }
+    .note { font-size: 11px; line-height: 1.45; }
     .note-indent { padding-left: 38px; }
     .annex-header {
       display: flex;
@@ -194,31 +208,12 @@ export const buildFitnessCertificateHtml = (
       margin-bottom: 6px;
     }
     .section { margin-bottom: 12px; }
-    .check-line {
-      display: flex;
-      align-items: flex-start;
-      margin: 0 0 5px;
-      text-align: justify;
-    }
-    .check-text { flex: 1; }
-    .cb {
-      display: inline-block;
-      width: 12px;
-      height: 12px;
-      border: 1px solid #000;
-      margin-right: 6px;
-      margin-top: 2px;
-      text-align: center;
-      font-size: 10px;
-      line-height: 11px;
-      flex-shrink: 0;
-      font-weight: 700;
-    }
-    .plain-line { margin: 0 0 3px; }
+    .plain-line { margin: 0 0 5px; text-align: justify; }
   </style>
 </head>
 <body>
-  <div class="page">
+  <div class="page page-one">
+    <div class="page-body">
     <div class="rule-ref">[(see rule 111 (c)]</div>
     <h1 class="title">CERTIFICATE OF MEDICAL EXAMINATION</h1>
 
@@ -262,16 +257,22 @@ export const buildFitnessCertificateHtml = (
 
     <div class="row">8. Reason for--</div>
     <div class="reason-row"><span>(1) Refusal of certificate</span>${dotted(cert.reason_refusal)}</div>
-    <div class="reason-row" style="margin-bottom:32px"><span>(2) Certificate being revoked</span>${dotted(cert.reason_revoked)}</div>
-
-    <div class="sign-row">
-      <div class="sign-left">Signature/Left hand Thumb impression of building worker</div>
-      <div class="sign-right">Signature with Seal Medical Inspector/ C.M.O</div>
+    <div class="reason-row" style="margin-bottom:0"><span>(2) Certificate being revoked</span>${dotted(cert.reason_revoked)}</div>
     </div>
 
-    <div class="note">
-      <div><strong>Note :</strong> 1. Exact details of cause of physical disability should be clearly stated.</div>
-      <div class="note-indent">2. Functional/productive abilities should also be stated if disability is stated.</div>
+    <div class="page-footer">
+      <div class="sign-row">
+        <div class="sign-left">Signature/Left hand Thumb impression of building worker</div>
+        <div class="sign-right">
+          <div class="doctor-name">${val(cert.doctor_name)}</div>
+          Signature with Seal Medical Inspector/ C.M.O
+        </div>
+      </div>
+
+      <div class="note">
+        <div><strong>Note :</strong> 1. Exact details of cause of physical disability should be clearly stated.</div>
+        <div class="note-indent">2. Functional/productive abilities should also be stated if disability is stated.</div>
+      </div>
     </div>
   </div>
 
@@ -295,57 +296,53 @@ export const buildFitnessCertificateHtml = (
 
     <div class="section">
       <div class="section-title">Additional checks for Operators &amp; Drivers (As Per Bocw Act &amp; Rules)</div>
-      ${checkLine(isChecked(cert.op_general_physique), '<strong>(i) General Physique;</strong>')}
-      ${checkLine(
-        isChecked(cert.op_vision),
-        '<strong>(ii) Vision—</strong> Total visual performance using standard orthorator like Titmus Vision Tester should be estimated and suitability for placement ascertaines in accordance with the prescribed job standards.',
-      )}
-      ${checkLine(
-        isChecked(cert.op_hearing),
-        '<strong>(iii) Hearing—</strong> Persons with normal hearing must be able to hear a forced whisper at twenty-four feet. Person using hearing aids must be able to hear a warning shout under noisy working conditions.',
-      )}
-      ${checkLine(
-        isChecked(cert.op_breathing),
-        '<strong>(iv) Breathing—</strong> Peak flow rate using standard peak flow meter and the average peak flow rate determined out of these readings of the test performed. The results recorded at pre-placement medical examination could be used as a standard for the same individual at the same altitude for reference during subsequent examination.',
-      )}
-      ${checkLine(
-        isChecked(cert.op_upper_limbs),
-        '<strong>(v) Upper Limbs—</strong> Adequate arm function and grip (both arms).',
-      )}
-      ${checkLine(
-        isChecked(cert.op_lower_limbs),
-        '<strong>(vi) Lower Limbs—</strong> Adequate leg and foot function.',
-      )}
-      ${checkLine(
-        isChecked(cert.op_spine),
-        '<strong>(vii) Spine—</strong> Adequately flexible for the job concerned.',
-      )}
-      ${checkLine(
-        isChecked(cert.op_general_mental_alertness),
-        '<strong>(viii) General—</strong> Mental alertness and stability with good eye, hand and foot coordination.',
+      ${textLine(`<strong>(i) General Physique;</strong> ${underline(fieldText(cert.op_general_physique), '120px')}`)}
+      ${textLine(
+        `<strong>(ii) Vision—</strong> Total visual performance using standard orthorator like Titmus Vision Tester should be estimated and suitability for placement ascertaines in accordance with the prescribed job standards. ${underline(fieldText(cert.op_vision), '120px')}`,
       )}
       ${textLine(
-        `<strong>(c) Any other tests</strong> which the examining doctor considers necessary. ${underline(cert.op_other_examination, '140px')}`,
+        `<strong>(iii) Hearing—</strong> Persons with normal hearing must be able to hear a forced whisper at twenty-four feet. Person using hearing aids must be able to hear a warning shout under noisy working conditions. ${underline(fieldText(cert.op_hearing), '120px')}`,
+      )}
+      ${textLine(
+        `<strong>(iv) Breathing—</strong> Peak flow rate using standard peak flow meter and the average peak flow rate determined out of these readings of the test performed. The results recorded at pre-placement medical examination could be used as a standard for the same individual at the same altitude for reference during subsequent examination. ${underline(fieldText(cert.op_breathing), '120px')}`,
+      )}
+      ${textLine(
+        `<strong>(v) Upper Limbs—</strong> Adequate arm function and grip (both arms). ${underline(fieldText(cert.op_upper_limbs), '120px')}`,
+      )}
+      ${textLine(
+        `<strong>(vi) Lower Limbs—</strong> Adequate leg and foot function. ${underline(fieldText(cert.op_lower_limbs), '120px')}`,
+      )}
+      ${textLine(
+        `<strong>(vii) Spine—</strong> Adequately flexible for the job concerned. ${underline(fieldText(cert.op_spine), '120px')}`,
+      )}
+      ${textLine(
+        `<strong>(viii) General—</strong> Mental alertness and stability with good eye, hand and foot coordination. ${underline(fieldText(cert.op_general_mental_alertness), '120px')}`,
+      )}
+      ${textLine(
+        `<strong>(c) Any other tests</strong> which the examining doctor considers necessary. ${underline(fieldText(cert.op_other_examination), '140px')}`,
       )}
     </div>
 
     <div class="section">
       <div class="section-title">Additional checks for Food Handlers (Workmen involved in preparation &amp; supply)</div>
-      ${checkLine(isChecked(cert.fh_skin_diseases), 'Careful examination for skin diseases')}
-      ${checkLine(isChecked(cert.fh_personal_hygiene), 'Personal hygiene such as hair, nails etc.')}
       ${textLine(
-        `Chest X-ray if preliminary examination reveals chest congestion (Separate reports to be attached, if conducted) ${underline(cert.fh_chest_xray, '120px')}`,
+        `Careful examination for skin diseases ${underline(fieldText(cert.fh_skin_diseases), '120px')}`,
+      )}
+      ${textLine(
+        `Personal hygiene such as hair, nails etc. ${underline(fieldText(cert.fh_personal_hygiene), '120px')}`,
+      )}
+      ${textLine(
+        `Chest X-ray if preliminary examination reveals chest congestion (Separate reports to be attached, if conducted) ${underline(fieldText(cert.fh_chest_xray), '120px')}`,
       )}
     </div>
 
     <div class="section">
       <div class="section-title">Additional checks for Welders</div>
-      ${checkLine(
-        isChecked(cert.welder_respiratory_diseases),
-        'Examine &amp; check for symptoms of respiratory diseases.',
+      ${textLine(
+        `Examine &amp; check for symptoms of respiratory diseases. ${underline(fieldText(cert.welder_respiratory_diseases), '120px')}`,
       )}
       ${textLine(
-        `If suspected Chest X-ray taken to confirm fitness (Separate reports to be attached, if conducted) ${underline(cert.welder_chest_xray, '120px')}`,
+        `If suspected Chest X-ray taken to confirm fitness (Separate reports to be attached, if conducted) ${underline(fieldText(cert.welder_chest_xray), '120px')}`,
       )}
     </div>
   </div>

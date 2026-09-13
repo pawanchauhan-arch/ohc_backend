@@ -96,6 +96,48 @@ export class OpdBillingService {
       data.header.AddedBy = addedBy;
       data.header.center_id = centerId;
       data.header.tenant_id = requestingUser?.tenantId;
+      
+const isPreviousDueClearance = data.details?.some(
+  (detail) => detail.ServiceName === 'Previous Due Clearance',
+);
+
+if (isPreviousDueClearance) {
+  const clearanceAmount = Number(data.header.PaidAmount || 0);
+  const uhid = data.header.PicasoNo;
+
+  if (clearanceAmount > 0 && uhid) {
+    const previousBill = await this.billingModel.findOne({
+      where: {
+        PicasoNo: uhid,
+        DueAmount: {
+          [Op.gt]: 0,
+        },
+        IsActive: true,
+      },
+      order: [['ID', 'DESC']],
+      transaction,
+    });
+
+    if (previousBill) {
+      const oldDueAmount = Number(previousBill.DueAmount || 0);
+
+      const amountToAdjust = Math.min(
+        clearanceAmount,
+        oldDueAmount,
+      );
+
+      await previousBill.update(
+        {
+          
+          DueAmount: oldDueAmount - amountToAdjust,
+        },
+        { transaction },
+      );
+    }
+  }
+}
+
+
       const bill = await this.billingModel.create(data.header, { transaction });
       const dailyPatient = await this.picasoOpdDailyPatientListModel.findOne({
         where: {

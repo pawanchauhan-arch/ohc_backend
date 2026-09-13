@@ -187,4 +187,19 @@ export class driverhealthcheckup extends Model {
 
   @Column({ type: DataType.DATE, allowNull: true })
   updated_by_admin_at: Date | null;
+
+  @Column({ type: DataType.STRING, defaultValue: 'PAID_BY_CET' })
+  package_payment_type: string;
+
+  @Column({ type: DataType.DECIMAL(10, 2), defaultValue: 0.00 })
+  package_amount: number;
+
+  @Column({ type: DataType.STRING, defaultValue: 'NA' })
+  medicine_payment_type: string;
+
+  @Column({ type: DataType.DECIMAL(10, 2), defaultValue: 0.00 })
+  medicine_amount: number;
+
+  @Column({ type: DataType.DECIMAL(10, 2), defaultValue: 0.00 })
+  total_amount: number;
 }

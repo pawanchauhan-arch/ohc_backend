@@ -95,6 +95,8 @@ export class OhcFitnessService {
     return {
       patient_id: data.patient_id || null,
       project_name: data.project_name || projectName,
+      doctor_id: data.doctor_id ? Number(data.doctor_id) : null,
+      doctor_name: data.doctor_name || null,
       center_id: data.center_id || null,
       tenant_id: data.tenant_id || 0,
       workman_name: data.workman_name,
@@ -104,14 +106,17 @@ export class OhcFitnessService {
       guardian_name: data.guardian_name,
       sex: data.sex,
       residence_address: data.residence_address,
-      date_of_birth: data.date_of_birth,
+      date_of_birth: data.date_of_birth || null,
       certificate_age: data.certificate_age,
       reason_refusal: data.reason_refusal || null,
       reason_revoked: data.reason_revoked || null,
-      height: data.height || null,
-      weight: data.weight || null,
-      blood_pressure: data.blood_pressure || null,
-      pulse: data.pulse || null,
+      height: data.height != null && data.height !== '' ? String(data.height) : null,
+      weight: data.weight != null && data.weight !== '' ? String(data.weight) : null,
+      blood_pressure:
+        data.blood_pressure != null && data.blood_pressure !== ''
+          ? String(data.blood_pressure)
+          : null,
+      pulse: data.pulse != null && data.pulse !== '' ? String(data.pulse) : null,
       hearing: data.hearing || null,
       refractive_error: data.refractive_error || null,
       color_vision: data.color_vision || null,
@@ -128,19 +133,19 @@ export class OhcFitnessService {
       prev_major_illness_surgery: data.prev_major_illness_surgery || null,
       prev_symptoms_visible: data.prev_symptoms_visible || null,
       prev_others: data.prev_others || null,
-      op_general_physique: Boolean(data.op_general_physique),
-      op_vision: Boolean(data.op_vision),
-      op_hearing: Boolean(data.op_hearing),
-      op_breathing: Boolean(data.op_breathing),
-      op_upper_limbs: Boolean(data.op_upper_limbs),
-      op_lower_limbs: Boolean(data.op_lower_limbs),
-      op_spine: Boolean(data.op_spine),
-      op_general_mental_alertness: Boolean(data.op_general_mental_alertness),
+      op_general_physique: data.op_general_physique || null,
+      op_vision: data.op_vision || null,
+      op_hearing: data.op_hearing || null,
+      op_breathing: data.op_breathing || null,
+      op_upper_limbs: data.op_upper_limbs || null,
+      op_lower_limbs: data.op_lower_limbs || null,
+      op_spine: data.op_spine || null,
+      op_general_mental_alertness: data.op_general_mental_alertness || null,
       op_other_examination: data.op_other_examination || null,
-      fh_skin_diseases: Boolean(data.fh_skin_diseases),
-      fh_personal_hygiene: Boolean(data.fh_personal_hygiene),
+      fh_skin_diseases: data.fh_skin_diseases || null,
+      fh_personal_hygiene: data.fh_personal_hygiene || null,
       fh_chest_xray: data.fh_chest_xray || null,
-      welder_respiratory_diseases: Boolean(data.welder_respiratory_diseases),
+      welder_respiratory_diseases: data.welder_respiratory_diseases || null,
       welder_chest_xray: data.welder_chest_xray || null,
       created_by: data.created_by,
       updated_by: data.updated_by,
@@ -154,7 +159,6 @@ export class OhcFitnessService {
       'guardian_name',
       'sex',
       'residence_address',
-      'date_of_birth',
       'certificate_age',
     ];
 
@@ -181,29 +185,6 @@ export class OhcFitnessService {
     return Buffer.from(buffer);
   }
 
-  private async generatePdf(cert: OHCFitnessCertificate, transaction?: any) {
-    const orgProfile = await this.resolveOrganizationProfile(
-      cert.tenant_id,
-      cert.center_id,
-    );
-    const html = buildFitnessCertificateHtml(cert.toJSON(), orgProfile);
-    const dir = path.join(process.cwd(), 'uploads/certificates');
-
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-
-    const fileName = `cert_${cert.id}.pdf`;
-    const filePath = path.join(dir, fileName);
-    const pdfBuffer = await this.htmlToPdfBuffer(html);
-    fs.writeFileSync(filePath, pdfBuffer);
-
-    await cert.update(
-      { pdf_url: `/uploads/certificates/${fileName}` },
-      transaction ? { transaction } : undefined,
-    );
-  }
-
   async createCertificate(data: any) {
     this.validatePayload(data);
 
@@ -214,16 +195,13 @@ export class OhcFitnessService {
         data.center_id,
       );
 
-      const cert = await this.certModel.create(
+      return this.certModel.create(
         {
           ...this.mapPayload(data, projectName),
           certificate_number: certNo,
         },
         { transaction: t },
       );
-
-      await this.generatePdf(cert, t);
-      return cert;
     });
   }
 
@@ -254,11 +232,9 @@ export class OhcFitnessService {
       data.tenant_id ?? record.tenant_id,
       data.center_id ?? record.center_id,
     );
-
-    await record.update(
+ await record.update(
       this.mapPayload({ ...record.toJSON(), ...data }, projectName),
     );
-    await this.generatePdf(record);
     return record;
   }
 

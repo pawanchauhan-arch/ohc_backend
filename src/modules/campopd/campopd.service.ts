@@ -214,7 +214,7 @@ export class CampOpdBillingService {
       if (!bill) throw new NotFoundException('Bill not found');
 
       await this.billDetailModel.destroy({
-        where: { BillNo: id },
+        where: { BillNo: String(id) },
         transaction,
       });
       await this.billingModel.destroy({ where: { ID: id }, transaction });

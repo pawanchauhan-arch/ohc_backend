@@ -2,48 +2,30 @@ import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/sequelize';
 import axios from 'axios';
 import { uploadToS3WithFolder } from '../../../utils/s3-image-upload';
-import {driverhealthcheckup } from '../../../models/DriverHealthCheckup';
+import { driverhealthcheckup } from '../../../models/DriverHealthCheckup';
 import { PhlebotomistService } from '../../phlebotomist/phlebotomist.service';
-import {CampList} from '../../../models/CampList';
-import {CampListItem} from '../../../models/CampListItem';
-import {DRIVERMASTER} from '../../../models/DriverMaster';
+import { CampList } from '../../../models/CampList';
+import { CampListItem } from '../../../models/CampListItem';
+import { DRIVERMASTER } from '../../../models/DriverMaster';
 import { PDFDocument } from 'pdf-lib';
-import * as fs from 'fs';
 import { HealthCheckupService } from '../../healthCheckup/health-checkup.service';
 import { buildLmcHealthCheckupMainPdfFromPayload } from '../../lmc-driver-health-report/lmc-driver-health-checkup-pdf.copy';
-
 import { Cbc } from '../../../models/health-tests/cbc.model';
 import { Biochemistry } from '../../../models/health-tests/biochemistry.model';
 import { LipidProfile } from '../../../models/health-tests/lipid_profile.model';
 import { Kft } from '../../../models/health-tests/kft.model';
 import { Lft } from '../../../models/health-tests/lft.model';
 import { Sequelize } from 'sequelize-typescript';
-import {samplifyConfig } from 'config/envConfig';
 
-
-import { exec } from 'child_process';
-import { promisify } from 'util';
-import * as fsPromises from 'fs/promises';
-import * as path from 'path';
-import * as os from 'os';
-import { randomUUID } from 'crypto';
-import * as muhammara from 'muhammara';
-const execPromise = promisify(exec);
-
-
-
-
-const BUCKET_NAME_REPORTS=process.env.BUCKET_NAME_REPORTS;
+const BUCKET_NAME_REPORTS = process.env.BUCKET_NAME_REPORTS;
 
 @Injectable()
 export class CampProcessor {
   private readonly logger = new Logger(CampProcessor.name);
-  private readonly apiKey = process.env.SAMPLIFY_API_KEY ; // Your API key from Sathi portal
-  private readonly customerCode = samplifyConfig.customerCode;
   private readonly reportRenderTimeoutMs = 60000;
 
   constructor(
-   @InjectModel(CampListItem) private readonly campListItemModel: typeof CampListItem,
+    @InjectModel(CampListItem) private readonly campListItemModel: typeof CampListItem,
     @InjectModel(CampList) private readonly campListModel: typeof CampList,
     @InjectModel(DRIVERMASTER) private readonly driverModel: typeof DRIVERMASTER,
     @InjectModel(driverhealthcheckup) private readonly driverHealthCheckupModel: typeof driverhealthcheckup,
@@ -51,34 +33,21 @@ export class CampProcessor {
     private readonly healthCheckupService: HealthCheckupService,
     @InjectConnection()
     private readonly sequelize: Sequelize,
-        @InjectModel(Cbc)
-        private readonly cbcModel: typeof Cbc,
-    
-        @InjectModel(Biochemistry)
-        private readonly biochemistryModel: typeof Biochemistry,
-    
-        @InjectModel(LipidProfile)
-        private readonly lipidProfileModel: typeof LipidProfile,
-    
-        @InjectModel(Kft)
-        private readonly kftModel: typeof Kft,
-    
-        @InjectModel(Lft)
-        private readonly lftModel: typeof Lft,
+    @InjectModel(Cbc)
+    private readonly cbcModel: typeof Cbc,
 
-  ) {}
+    @InjectModel(Biochemistry)
+    private readonly biochemistryModel: typeof Biochemistry,
 
+    @InjectModel(LipidProfile)
+    private readonly lipidProfileModel: typeof LipidProfile,
 
-  private getHeaders() {
-    return {
-      'Accept': 'application/json, text/plain, */*',
-      'Content-Type': 'application/json',
-      'api-key': this.apiKey,
-      'customer-code': this.customerCode,
-      // 'customer-code': 'TST',
-      'ngrok-skip-browser-warning': 'y',
-    };
-  }
+    @InjectModel(Kft)
+    private readonly kftModel: typeof Kft,
+
+    @InjectModel(Lft)
+    private readonly lftModel: typeof Lft,
+  ) { }
 
   async processCamp(payload: {
     camp_unique_id: string;
@@ -147,83 +116,83 @@ export class CampProcessor {
 
     if (phlebo_details?.length) {
 
-        await Promise.all(
-          phlebo_details.map(async (phelbo, index) => {
+      await Promise.all(
+        phlebo_details.map(async (phelbo, index) => {
+          this.logger.log(
+            `[processPhlebotomists] [${index + 1}/${phlebo_details.length}] Searching phlebotomist phone=${phelbo?.phone || 'unknown'}`,
+          );
+          const existing = await this.phlebotomistService.searchPhlebotomists(
+            camp.center_id, phelbo.phone,
+          );
+          this.logger.log(
+            `[processPhlebotomists] [${index + 1}/${phlebo_details.length}] Search result count=${existing?.length || 0}`,
+          );
+          let pid = existing?.[0]?.id;
+
+          if (!pid) {
             this.logger.log(
-              `[processPhlebotomists] [${index + 1}/${phlebo_details.length}] Searching phlebotomist phone=${phelbo?.phone || 'unknown'}`,
+              `[processPhlebotomists] [${index + 1}/${phlebo_details.length}] Creating new phlebotomist for phone=${phelbo?.phone || 'unknown'}`,
             );
-            const existing = await this.phlebotomistService.searchPhlebotomists(
-              camp.center_id, phelbo.phone,
+
+            const newPhlebo = await this.phlebotomistService.createPhlebotomist(
+              { phone: phelbo.phone, name: phelbo.name }, camp.center_id
             );
+            pid = newPhlebo.id;
             this.logger.log(
-              `[processPhlebotomists] [${index + 1}/${phlebo_details.length}] Search result count=${existing?.length || 0}`,
+              `[processPhlebotomists] [${index + 1}/${phlebo_details.length}] Created phlebotomist id=${pid}`,
             );
-            let pid = existing?.[0]?.id;
-    
-            if (!pid) {
-              this.logger.log(
-                `[processPhlebotomists] [${index + 1}/${phlebo_details.length}] Creating new phlebotomist for phone=${phelbo?.phone || 'unknown'}`,
-              );
-    
-              const newPhlebo = await this.phlebotomistService.createPhlebotomist(
-                { phone: phelbo.phone, name: phelbo.name }, camp.center_id
-              );
-              pid = newPhlebo.id;
-              this.logger.log(
-                `[processPhlebotomists] [${index + 1}/${phlebo_details.length}] Created phlebotomist id=${pid}`,
-              );
-            }
-            camp.statusSamplify = 'PHLEBO_ASSIGNED';
-            this.logger.log(
-              `[processPhlebotomists] [${index + 1}/${phlebo_details.length}] DB change planned: camp_list.statusSamplify=PHLEBO_ASSIGNED for camp_id=${camp.id}`,
-            );
-            await camp.save();
-            this.logger.log(
-              `[processPhlebotomists] [${index + 1}/${phlebo_details.length}] DB change success: camp_id=${camp.id} statusSamplify=${camp.statusSamplify}`,
-            );
-    
-            await this.phlebotomistService.addPhlebotomistsToCamp(
-              camp.id, camp.center_id, { phlebotomist_ids: [pid] },
-            );
-            this.logger.log(
-              `[processPhlebotomists] [${index + 1}/${phlebo_details.length}] Camp mapping updated with phlebotomist_id=${pid} for camp_id=${camp.id}`,
-            );
-          })
-        );
+          }
+          camp.statusSamplify = 'PHLEBO_ASSIGNED';
+          this.logger.log(
+            `[processPhlebotomists] [${index + 1}/${phlebo_details.length}] DB change planned: camp_list.statusSamplify=PHLEBO_ASSIGNED for camp_id=${camp.id}`,
+          );
+          await camp.save();
+          this.logger.log(
+            `[processPhlebotomists] [${index + 1}/${phlebo_details.length}] DB change success: camp_id=${camp.id} statusSamplify=${camp.statusSamplify}`,
+          );
+
+          await this.phlebotomistService.addPhlebotomistsToCamp(
+            camp.id, camp.center_id, { phlebotomist_ids: [pid] },
+          );
+          this.logger.log(
+            `[processPhlebotomists] [${index + 1}/${phlebo_details.length}] Camp mapping updated with phlebotomist_id=${pid} for camp_id=${camp.id}`,
+          );
+        })
+      );
 
     }
-    
+
   }
 
   private async processPatients(camp: any, camp_patients: any[]) {
     this.logger.log(`[processPatients] Starting ${camp_patients?.length || 0} patient records for camp_id=${camp.id}`);
 
-      await Promise.all(
-        camp_patients.map(async (patient, index) => {
+    await Promise.all(
+      camp_patients.map(async (patient, index) => {
         this.logger.log(
           `[processPatients] [${index + 1}/${camp_patients.length}] Looking up driver by patient_ref_id=${patient?.patient_ref_id || 'unknown'}`,
         );
-        const driver = await this.driverModel.findOne({ where: { employeeId: patient.patient_ref_id }});
+        const driver = await this.driverModel.findOne({ where: { employeeId: patient.patient_ref_id } });
         if (!driver) {
           this.logger.warn(
             `[processPatients] [${index + 1}/${camp_patients.length}] Driver not found for patient_ref_id=${patient?.patient_ref_id || 'unknown'}`,
           );
-          return {success: false, message: 'Driver not found'};
+          return { success: false, message: 'Driver not found' };
         }
 
         this.logger.log(
           `[processPatients] [${index + 1}/${camp_patients.length}] Looking up camp_list_item by driver_id=${driver.id}, camp_id=${camp.id}`,
         );
-        const item = await this.campListItemModel.findOne({ where: { driver_id: driver.id, camp_id: camp.id }});
+        const item = await this.campListItemModel.findOne({ where: { driver_id: driver.id, camp_id: camp.id } });
         if (!item) {
           this.logger.warn(
             `[processPatients] [${index + 1}/${camp_patients.length}] Camp list item not found for driver_id=${driver.id}, camp_id=${camp.id}`,
           );
-          return {success: false, message: 'Driver not found'};
+          return { success: false, message: 'Driver not found' };
         }
 
         const parameterMetadata = patient?.parameter_metadata ?? patient?.report_metadata;
-        if (!parameterMetadata){
+        if (!parameterMetadata) {
           this.logger.warn(
             `[processPatients] [${index + 1}/${camp_patients.length}] No parameter metadata for patient_ref_id=${patient?.patient_ref_id || 'unknown'}. Skipping DB updates.`,
           );
@@ -244,12 +213,12 @@ export class CampProcessor {
           `[processPatients] [${index + 1}/${camp_patients.length}] Downloading/uploading reports count=${Array.isArray(patient?.reports) ? patient.reports.length : 0} folder=${folderPath}`,
         );
 
-        const {uploadedUrls , pdfBuffers } = await this.downloadAndUploadReports(folderPath, patient.reports);
+        const { uploadedUrls, pdfBuffers } = await this.downloadAndUploadReports(folderPath, patient.reports);
         this.logger.log(
           `[processPatients] [${index + 1}/${camp_patients.length}] Report upload result: uploaded=${uploadedUrls.length}, pdfBuffers=${pdfBuffers.length}`,
         );
         const temp: Buffer[] = [];
-        if (item.driver_health_checkup_id){
+        if (item.driver_health_checkup_id) {
           this.logger.log(
             `[processPatients] [${index + 1}/${camp_patients.length}] Generating internal report for healthCheckupId=${item.driver_health_checkup_id}`,
           );
@@ -267,12 +236,12 @@ export class CampProcessor {
         this.logger.log(
           `[processPatients] [${index + 1}/${camp_patients.length}] Merged report URL generated=${mergedUrl || 'none'}`,
         );
-        
+
         item.test_report = parameterMetadata;
         this.logger.log(
           `[processPatients] [${index + 1}/${camp_patients.length}] DB change planned: camp_list_item.id=${item.id} test_report + report URLs`,
         );
-        
+
         if (uploadedUrls.length >= 0) {
           item.is_report_Uploaded = 'success';
           item.merged_report_url = mergedUrl.toString();
@@ -288,9 +257,9 @@ export class CampProcessor {
             `[processPatients] [${index + 1}/${camp_patients.length}] DB change success: camp_list_item.id=${item.id} is_report_Uploaded=failed`,
           );
         }
-        
-        
-        })
+
+
+      })
     );
 
     // final status set externally by worker if needed
@@ -322,9 +291,9 @@ export class CampProcessor {
 
     const { concerns } = this.generateConcerns(testReport);
     if (healthCheckup.concerns && Array.isArray(healthCheckup.concerns)) {
-        healthCheckup.concerns = [...healthCheckup.concerns, ...concerns];
+      healthCheckup.concerns = [...healthCheckup.concerns, ...concerns];
     } else {
-    healthCheckup.concerns = [...(concerns || [])];
+      healthCheckup.concerns = [...(concerns || [])];
     }
 
     this.logger.log(
@@ -333,7 +302,7 @@ export class CampProcessor {
     await healthCheckup.save();
     this.logger.log(`[updateHealthCheckup] Step 4: DB change success: driverhealthcheckup id=${healthCheckupId} saved`);
     this.logger.log(`[updateHealthCheckup] Step 5: Updating per-test result tables for healthcheckup id=${healthCheckupId}`);
-    await this.saveResultsPerTable(healthCheckupId,testReport);
+    await this.saveResultsPerTable(healthCheckupId, testReport);
   }
 
   private generateConcerns(testReport: any[]) {
@@ -455,21 +424,21 @@ export class CampProcessor {
     this.logger.log(
       `[downloadAndUploadReports] Completed for folder=${folderPath}: uploaded=${uploadedUrls.length}, buffers=${pdfBuffers.length}`,
     );
-    return {uploadedUrls, pdfBuffers};
+    return { uploadedUrls, pdfBuffers };
   }
 
-  
-// ... keep your other imports like Logger, uploadToS3WithFolder, etc.
+
+  // ... keep your other imports like Logger, uploadToS3WithFolder, etc.
 
   private async mergedReports(pdfBuffers: Buffer[], folderPath: string) {
     this.logger.log(
       `[mergedReports] Starting merge for folder=${folderPath} buffers=${Array.isArray(pdfBuffers) ? pdfBuffers.length : 0}`,
     );
-    
+
     // 1. Basic Validation
     if (!pdfBuffers || pdfBuffers.length === 0) {
       this.logger.warn('No valid PDFs to merge');
-      return "";
+      return '';
     }
 
     // 2. Optimization: Single PDF check
@@ -479,55 +448,65 @@ export class CampProcessor {
     }
 
     try {
-      this.logger.debug(`Merging ${pdfBuffers.length} PDFs using Muhammara (In-Memory)...`);
+      this.logger.debug(`Merging ${pdfBuffers.length} PDFs using pdf-lib (In-Memory)...`);
 
       // 3. Filter only valid PDF buffers (Magic bytes check)
-      const validBuffers = pdfBuffers.filter(buf => buf && buf.slice(0, 4).toString() === '%PDF');
-      this.logger.log(`[mergedReports] Valid PDF buffers=${validBuffers.length}/${pdfBuffers.length}`);
-
-      if (validBuffers.length === 0) {
-         throw new Error("No valid PDF files found to merge.");
-      }
-
-      // 4. Initialize Memory Streams
-      // We create a writable stream in memory to hold the final result
-      const outStream = new muhammara.PDFWStreamForBuffer();
-
-      // We start the PDF writer using the FIRST buffer as the base
-      const pdfWriter = muhammara.createWriterToModify(
-          new muhammara.PDFRStreamForBuffer(validBuffers[0]), 
-          outStream
+      const validBuffers = pdfBuffers.filter(
+        (buf) => buf && buf.slice(0, 4).toString() === '%PDF',
+      );
+      this.logger.log(
+        `[mergedReports] Valid PDF buffers=${validBuffers.length}/${pdfBuffers.length}`,
       );
 
-      // 5. Append remaining PDFs
-      for (let i = 1; i < validBuffers.length; i++) {
-        const pdfReaderStream = new muhammara.PDFRStreamForBuffer(validBuffers[i]);
-        // appendPDFPagesFromPDF safely copies pages from source to destination
-        pdfWriter.appendPDFPagesFromPDF(pdfReaderStream);
+      if (validBuffers.length === 0) {
+        throw new Error('No valid PDF files found to merge.');
       }
 
-      // 6. Finalize the PDF structure
-      pdfWriter.end();
+      // 4. Create new merged PDF document
+      const mergedPdfDoc = await PDFDocument.create();
 
-      // 7. Extract the final Buffer
-      const mergedPdfBytes = outStream.buffer;
-      this.logger.debug('PDF merge completed successfully.');
+      // 5. Load and copy pages from all valid PDF buffers
+      for (let i = 0; i < validBuffers.length; i++) {
+        try {
+          const srcPdfDoc = await PDFDocument.load(validBuffers[i], {
+            ignoreEncryption: true,
+          });
+          const pageIndices = srcPdfDoc.getPageIndices();
+          const copiedPages = await mergedPdfDoc.copyPages(srcPdfDoc, pageIndices);
+          copiedPages.forEach((page) => mergedPdfDoc.addPage(page));
+        } catch (srcErr) {
+          this.logger.error(
+            `[mergedReports] Skipping problematic PDF buffer index=${i}: ${srcErr?.message || srcErr}`,
+          );
+        }
+      }
 
-      // 8. Upload
-      const uploadedMergedUrl = await this.uploadToS3(mergedPdfBytes, folderPath);
+      if (mergedPdfDoc.getPageCount() === 0) {
+        throw new Error('No pages were successfully copied into merged PDF');
+      }
+
+      // 6. Save final merged PDF bytes
+      const mergedPdfBytes = await mergedPdfDoc.save();
+      const mergedBuffer = Buffer.from(mergedPdfBytes);
+      this.logger.debug('PDF merge completed successfully via pdf-lib.');
+
+      // 7. Upload
+      const uploadedMergedUrl = await this.uploadToS3(mergedBuffer, folderPath);
       this.logger.log(`[mergedReports] Merge+upload success URL=${uploadedMergedUrl}`);
       return uploadedMergedUrl;
-
     } catch (error) {
       this.logger.error(`Merge/Upload failed: ${error.message}`, error.stack);
-      
+
       // --- FALLBACK MECHANISM ---
-      // Upload the first valid PDF if merging failed
       if (pdfBuffers[0]) {
-          this.logger.warn('Falling back to uploading the first PDF only due to merge failure.');
-          const fallbackUrl = await this.uploadToS3(pdfBuffers[0], folderPath);
-          this.logger.warn(`[mergedReports] Fallback upload success URL=${fallbackUrl}`);
-          return fallbackUrl;
+        this.logger.warn(
+          'Falling back to uploading the first PDF only due to merge failure.',
+        );
+        const fallbackUrl = await this.uploadToS3(pdfBuffers[0], folderPath);
+        this.logger.warn(
+          `[mergedReports] Fallback upload success URL=${fallbackUrl}`,
+        );
+        return fallbackUrl;
       }
       return null;
     }
@@ -535,17 +514,17 @@ export class CampProcessor {
 
   // Helper to keep the main function clean
   private async uploadToS3(buffer: Buffer, folderPath: string) {
-      const filename = `merged_reports_${Date.now()}.pdf`; 
-      this.logger.debug(`[uploadToS3] Uploading merged report filename=${filename} folder=${folderPath}`);
-      const multerFile = {
-        buffer: buffer,
-        originalname: filename,
-        mimetype: 'application/pdf',
-      } as unknown as Express.Multer.File;
+    const filename = `merged_reports_${Date.now()}.pdf`;
+    this.logger.debug(`[uploadToS3] Uploading merged report filename=${filename} folder=${folderPath}`);
+    const multerFile = {
+      buffer: buffer,
+      originalname: filename,
+      mimetype: 'application/pdf',
+    } as unknown as Express.Multer.File;
 
-      const s3Url = await uploadToS3WithFolder(multerFile, BUCKET_NAME_REPORTS, `${folderPath}/MergedReports`);
-      this.logger.debug(`Uploaded PDF to S3: ${s3Url}`);
-      return s3Url;
+    const s3Url = await uploadToS3WithFolder(multerFile, BUCKET_NAME_REPORTS, `${folderPath}/MergedReports`);
+    this.logger.debug(`Uploaded PDF to S3: ${s3Url}`);
+    return s3Url;
   }
 
   /**
@@ -774,7 +753,7 @@ export class CampProcessor {
       this.logger.log(
         `[saveResultsPerTable] Step 3: Transaction committed for driverhealthcheckups_id=${driverId} (cbc=${hasCbc}, bio=${hasBio}, lipid=${hasLipid}, kft=${hasKft}, lft=${hasLft})`,
       );
-      
+
       return { status: 'success', message: 'Health report data saved successfully' };
 
     } catch (error) {
@@ -785,6 +764,4 @@ export class CampProcessor {
       );
     }
   }
-
-
 }

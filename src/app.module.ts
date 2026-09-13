@@ -200,6 +200,9 @@ import { PackagemanagementModule } from './modules/PackageManagement/packagemana
 import { PicasoCampAdviceList } from './models/CampAdviceList';
 import { PicasoPatientCampConsultingSheetDetails } from './models/PatientCampConsultingSheetdetails';
 import { PicasoidCampPrescriptionModule } from './modules/PicasoidCampPrescription/picasoid-prescription-camp';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+
 import { DepartmentModule } from './modules/ohc-department/ohc-department.module';
 import { Department } from './models/department.model';
 import { DesignationModule } from './modules/ohc-designation/ohc-designation.module';
@@ -268,6 +271,7 @@ if (isStaging === '1') {
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
+      logging: false,
       dialectOptions: {
         ssl: {
           require: true,
@@ -470,8 +474,8 @@ if (isStaging === '1') {
     AmbulancesModule,
     AmbulanceServicesModule,
   ],
-  controllers: [],
-  providers: [],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule implements OnModuleInit, NestModule {
   constructor(

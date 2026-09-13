@@ -1245,6 +1245,11 @@ export class HealthCheckupService {
         is_submited: true,
         vehicle_no: req.body.vehicle_no,
         confirm_report: nextConfirmReport,
+        package_payment_type: req.body.package_payment_type || 'PAID_BY_CET',
+        package_amount: req.body.package_amount !== undefined ? Number(req.body.package_amount) : 0,
+        medicine_payment_type: req.body.medicine_payment_type || 'NA',
+        medicine_amount: req.body.medicine_amount !== undefined ? Number(req.body.medicine_amount) : 0,
+        total_amount: req.body.total_amount !== undefined ? Number(req.body.total_amount) : 0,
       };
 
       if (reportConfirmedAt) {
@@ -1305,6 +1310,16 @@ export class HealthCheckupService {
         where: { id: id },
       });
       const healthCheckResult = await this.checkHealthData(getData);
+
+      // Always update concerns on the record to reflect current vital values
+      await driverhealthcheckup.update(
+        {
+          concerns: healthCheckResult?.concerns || [],
+          updatedAt: new Date(),
+        },
+        { where: { id } },
+      );
+
       const isReportConfirmed =
         String(req.body.confirm_report || '').trim().toLowerCase() === 'yes';
       if (

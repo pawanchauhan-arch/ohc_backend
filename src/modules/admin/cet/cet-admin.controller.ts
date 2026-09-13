@@ -435,6 +435,11 @@ export class CetAdminController {
     return this.cetAdminServiceLMC.editGateEntryNumber(req, res);
   }
 
+  @Post('editIdProofNumber')
+  editIdProofNumber(@Req() req: any, @Res() res: any) {
+    return this.cetAdminServiceLMC.editIdProofNumber(req, res);
+  }
+
   @Post('testCount')
   getTestCountByCenter(@Req() req: any, @Res() res: any) {
     return this.cetAdminServiceLMC.getTestCountByCenter(req, res);

@@ -3,7 +3,6 @@ import {
   IsOptional,
   IsString,
   Matches,
-  ValidateIf,
 } from 'class-validator';
 
 /**
@@ -17,24 +16,21 @@ export class ShiftSummaryRequestDto {
   @IsNotEmpty()
   center_id: string | number;
 
-  @ValidateIf((body) => !body.startDate && !body.endDate)
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   @Matches(/^\d{4}-\d{2}-\d{2}$/, {
     message: 'operational_date must be in YYYY-MM-DD format',
   })
   operational_date?: string;
 
-  @ValidateIf((body) => body.endDate != null && body.endDate !== '')
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   @Matches(/^\d{4}-\d{2}-\d{2}$/, {
     message: 'startDate must be in YYYY-MM-DD format',
   })
   startDate?: string;
 
-  @ValidateIf((body) => body.startDate != null && body.startDate !== '')
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   @Matches(/^\d{4}-\d{2}-\d{2}$/, {
     message: 'endDate must be in YYYY-MM-DD format',

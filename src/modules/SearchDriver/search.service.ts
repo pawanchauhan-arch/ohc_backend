@@ -145,78 +145,96 @@ export class SearchService {
     try {
       let whereCondition: WhereOptions = {};
       let orderClause: Order = [['createdAt', 'DESC']];
-      const hasAnySearchFilter = Boolean(
-        body?.search?.trim() ||
-          body?.external_id?.trim() ||
-          body?.employeeId?.trim() ||
-          body?.name?.trim() ||
-          body?.healthCardNumber?.trim() ||
-          body?.abhaNumber?.trim() ||
-          body?.contactNumber?.trim() ||
+        const idProofVal =
           body?.idProof_number?.trim() ||
-          body?.driverId?.trim(),
-      );
+          (body as any)?.id_proof_number?.trim() ||
+          (body as any)?.idProofNumber?.trim();
 
-      // Default page size: Admin historically used 100 when page/limit omitted.
-      // Center and Admin UIs that send page/limit use those values instead.
-      const defaultLimit = body?.isCommingFromAdmin ? 100 : 10;
-      const page = Math.max(Number(body?.page) || 1, 1);
-      const limit = Math.min(
-        Math.max(Number(body?.limit) || defaultLimit, 1),
-        100,
-      );
-      const offset = (page - 1) * limit;
+        const hasAnySearchFilter = Boolean(
+          body?.search?.trim() ||
+            body?.external_id?.trim() ||
+            body?.employeeId?.trim() ||
+            body?.name?.trim() ||
+            body?.healthCardNumber?.trim() ||
+            body?.abhaNumber?.trim() ||
+            body?.contactNumber?.trim() ||
+            idProofVal ||
+            body?.driverId?.trim(),
+        );
 
-      /* ---------------------- ADMIN FLOW ---------------------- */
-      if (body?.isCommingFromAdmin) {
-        if (body.center_id === undefined || body.center_id === null || body.center_id === '') {
-          throw new BadRequestException(
-            'center_id is required for admin search',
-          );
-        }
-        const { centerIds } = parseCenterId(body.center_id, { required: true });
-        whereCondition = {
-          ...whereCondition,
-          createdBy:
-            centerIds.length === 1
-              ? centerIds[0]
-              : { [Op.in]: centerIds },
-        };
+        // Default page size: Admin historically used 100 when page/limit omitted.
+        // Center and Admin UIs that send page/limit use those values instead.
+        const defaultLimit = body?.isCommingFromAdmin ? 100 : 10;
+        const page = Math.max(Number(body?.page) || 1, 1);
+        const limit = Math.min(
+          Math.max(Number(body?.limit) || defaultLimit, 1),
+          100,
+        );
+        const offset = (page - 1) * limit;
 
-        /* ---------- Date Filter (Safe) ---------- */
-        if (body.start_date && body.end_date) {
-          const start = new Date(body.start_date);
-          start.setHours(0, 0, 0, 0);
-
-          const end = new Date(body.end_date);
-          end.setHours(23, 59, 59, 999);
-
-          whereCondition.createdAt = {
-            [Op.between]: [start, end],
+        /* ---------------------- ADMIN FLOW ---------------------- */
+        if (body?.isCommingFromAdmin) {
+          if (body.center_id === undefined || body.center_id === null || body.center_id === '') {
+            throw new BadRequestException(
+              'center_id is required for admin search',
+            );
+          }
+          const { centerIds } = parseCenterId(body.center_id, { required: true });
+          whereCondition = {
+            ...whereCondition,
+            createdBy:
+              centerIds.length === 1
+                ? centerIds[0]
+                : { [Op.in]: centerIds },
           };
-        }
 
-        /* ---------- LIKE Filters (Reusable) ---------- */
-        const likeFilters: SearchableFields[] = [
-          'external_id',
-          'employeeId',
-          'name',
-          'contactNumber',
-          'abhaNumber',
-          'healthCardNumber',
-          'idProof_number',
-          'driverId',
-        ];
+          /* ---------- Date Filter (Safe) ---------- */
+          if (body.start_date && body.end_date) {
+            const start = new Date(body.start_date);
+            start.setHours(0, 0, 0, 0);
 
-        likeFilters.forEach((key) => {
-          const value = body[key]?.trim();
+            const end = new Date(body.end_date);
+            end.setHours(23, 59, 59, 999);
 
-          if (value) {
-            whereCondition[key] = {
-              [Op.iLike]: `%${value}%`,
+            whereCondition.createdAt = {
+              [Op.between]: [start, end],
             };
           }
-        });
+
+          /* ---------- LIKE Filters (Reusable) ---------- */
+          const likeFilters: SearchableFields[] = [
+            'external_id',
+            'employeeId',
+            'name',
+            'contactNumber',
+            'abhaNumber',
+            'healthCardNumber',
+            'idProof_number',
+            'driverId',
+          ];
+
+          likeFilters.forEach((key) => {
+            const value =
+              key === 'idProof_number'
+                ? idProofVal
+                : body[key]?.trim();
+
+            if (value) {
+              if (key === 'idProof_number') {
+                const sanitizedVal = value.replace(/'/g, "''");
+                whereCondition[Op.and as any] = [
+                  ...(whereCondition[Op.and as any] || []),
+                  this.sequelize.literal(
+                    `("DRIVERMASTER"."idProof_number"::text ILIKE '%${sanitizedVal}%' OR "DRIVERMASTER"."idProof"::text ILIKE '%${sanitizedVal}%')`
+                  ),
+                ];
+              } else {
+                whereCondition[key] = {
+                  [Op.iLike]: `%${value}%`,
+                };
+              }
+            }
+          });
       } else {
 
       /* ---------------------- NORMAL FLOW ---------------------- */
@@ -499,7 +517,10 @@ export class SearchService {
       healthCardNumber: body.healthCardNumber,
       abhaNumber: body.abhaNumber,
       contactNumber: body.contactNumber,
-      idProof_number: body.idProof_number,
+      idProof_number:
+        body.idProof_number ||
+        (body as any).id_proof_number ||
+        (body as any).idProofNumber,
       driverId: body.driverId,
       centerId,
     };

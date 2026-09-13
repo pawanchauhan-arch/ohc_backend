@@ -23,44 +23,48 @@ async function bootstrap() {
     debug: console.debug.bind(console),
   };
 
+  const shouldIgnoreConsoleMessage = (msg: string) => {
+    return msg.includes('[winston] Attempt to write logs with no transports');
+  };
+
   console.log = (...args: any[]) => {
     originalConsole.log(...args);
-    lokiLogger.info(
-      args.length === 1 ? String(args[0]) : JSON.stringify(args),
-      { source: 'console', level: 'info' },
-    );
+    const msg = args.length === 1 ? String(args[0]) : JSON.stringify(args);
+    if (!shouldIgnoreConsoleMessage(msg)) {
+      lokiLogger.info(msg, { source: 'console', level: 'info' });
+    }
   };
 
   console.info = (...args: any[]) => {
     originalConsole.info(...args);
-    lokiLogger.info(
-      args.length === 1 ? String(args[0]) : JSON.stringify(args),
-      { source: 'console', level: 'info' },
-    );
+    const msg = args.length === 1 ? String(args[0]) : JSON.stringify(args);
+    if (!shouldIgnoreConsoleMessage(msg)) {
+      lokiLogger.info(msg, { source: 'console', level: 'info' });
+    }
   };
 
   console.warn = (...args: any[]) => {
     originalConsole.warn(...args);
-    lokiLogger.warn(
-      args.length === 1 ? String(args[0]) : JSON.stringify(args),
-      { source: 'console', level: 'warn' },
-    );
+    const msg = args.length === 1 ? String(args[0]) : JSON.stringify(args);
+    if (!shouldIgnoreConsoleMessage(msg)) {
+      lokiLogger.warn(msg, { source: 'console', level: 'warn' });
+    }
   };
 
   console.error = (...args: any[]) => {
     originalConsole.error(...args);
-    lokiLogger.error(
-      args.length === 1 ? String(args[0]) : JSON.stringify(args),
-      { source: 'console', level: 'error' },
-    );
+    const msg = args.length === 1 ? String(args[0]) : JSON.stringify(args);
+    if (!shouldIgnoreConsoleMessage(msg)) {
+      lokiLogger.error(msg, { source: 'console', level: 'error' });
+    }
   };
 
   console.debug = (...args: any[]) => {
     originalConsole.debug(...args);
-    lokiLogger.debug(
-      args.length === 1 ? String(args[0]) : JSON.stringify(args),
-      { source: 'console', level: 'debug' },
-    );
+    const msg = args.length === 1 ? String(args[0]) : JSON.stringify(args);
+    if (!shouldIgnoreConsoleMessage(msg)) {
+      lokiLogger.debug(msg, { source: 'console', level: 'debug' });
+    }
   };
 
   app.useLogger(lokiLogger);

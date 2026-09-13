@@ -1,5 +1,6 @@
 import { IsString, IsArray, IsOptional, ValidateNested, IsInt, IsEmail, IsDateString, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
+import { PartialType } from '@nestjs/mapped-types';
 
 export class CampPatientDto {
   @IsString() patient_ref_id: string;
@@ -56,3 +57,6 @@ export class CreateCustomerCampDto {
   @IsOptional() @IsBoolean()
   isCompleted?: boolean;
 }
+
+export class UpdateCustomerCampDto extends PartialType(CreateCustomerCampDto) {}
+

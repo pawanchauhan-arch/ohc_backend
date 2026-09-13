@@ -43,9 +43,9 @@ async createPrescriptionMedicine(data: CreatePrescriptionMedicineDto): Promise<P
       medicine_name: data.medicine_name,
       dosage: data.dosage,
       frequency: data.frequency,
-      duration: parseInt(data.duration as unknown as string, 10) || null,
+      duration: data.duration != null ? String(data.duration) : "",
       instructions: data.instructions ?? "",
-      medicine_type : data.medicine_type
+      medicine_type: data.medicine_type
     });
 
     // ✅ Update the Prescription's medicines array
@@ -101,16 +101,17 @@ async createPrescriptionMedicine(data: CreatePrescriptionMedicineDto): Promise<P
         // Store previous state
         const previousState = prescriptionMedicine.get({ plain: true });
 
-        const duration = updateData.duration 
-          ? parseInt(updateData.duration as unknown as string, 10) 
+        const updatedDuration = updateData.duration != null 
+          ? String(updateData.duration) 
           : prescriptionMedicine.duration;
 
         // Update the medicine
         await prescriptionMedicine.update({
           medicine_name: updateData.medicine_name ?? prescriptionMedicine.medicine_name,
+          medicine_type: updateData.medicine_type ?? prescriptionMedicine.medicine_type,
           dosage: updateData.dosage ?? prescriptionMedicine.dosage,
           frequency: updateData.frequency ?? prescriptionMedicine.frequency,
-          duration: updateData.duration ? prescriptionMedicine.duration : duration,
+          duration: updatedDuration,
           instructions: updateData.instructions ?? prescriptionMedicine.instructions,
         }, { transaction });
 

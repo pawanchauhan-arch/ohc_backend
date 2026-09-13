@@ -1,12 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, UploadedFile, UseInterceptors, Query, BadRequestException } from '@nestjs/common';
 import { CampService } from './camp.service';
-import { AddCampItemDto, CreateCampDto, UpdateCampDto, UpdateCampItemDto, CreateBarcodeDto } from './camp.dto';
+import { AddCampItemDto, UpdateCampItemDto, CreateBarcodeDto } from './camp.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { CreateCustomerCampDto } from '../Samplify/samplify.dto';
+import { CreateCustomerCampDto, UpdateCustomerCampDto } from '../Samplify/samplify.dto';
 
 @Controller('api/camps')
 export class CampController {
-  constructor(private readonly campService: CampService) {}
+  constructor(private readonly campService: CampService) { }
 
   /**
    * Validates and converts center_id parameter
@@ -38,7 +38,7 @@ export class CampController {
   }
 
   @Patch(':campId')
-  async updateCamp(@Param('campId') campId: string, @Body() dto: CreateCustomerCampDto, @Query('center_id') center_id: string) {
+  async updateCamp(@Param('campId') campId: string, @Body() dto: UpdateCustomerCampDto, @Query('center_id') center_id: string) {
     const centerId = this.validateCenterId(center_id);
     return this.campService.updateCamp(Number(campId), centerId, dto);
   }
@@ -101,6 +101,6 @@ export class CampController {
   @Post('uploadPatients')
   @UseInterceptors(FileInterceptor('file'))
   async uploadPatientsCsv(@UploadedFile() file: Express.Multer.File) {
-    return this.campService.uploadPatientsCsv( file);
+    return this.campService.uploadPatientsCsv(file);
   }
 }

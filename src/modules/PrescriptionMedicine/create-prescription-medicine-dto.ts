@@ -1,4 +1,5 @@
-import { IsUUID, IsString, IsArray, IsEnum, IsOptional } from 'class-validator';
+import { IsUUID, IsString, IsArray, IsOptional } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreatePrescriptionMedicineDto {
   @IsUUID()
@@ -24,6 +25,7 @@ export class CreatePrescriptionMedicineDto {
   @IsString({ each: true })
   frequency: string[];
 
+  @Transform(({ value }) => (value !== undefined && value !== null ? String(value) : value))
   @IsString()
   duration: string;
 

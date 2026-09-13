@@ -1,18 +1,8 @@
 import {
   Injectable,
-  BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
 import { sendSuccess, sendError } from 'src/utils/response.util';
-import { Bloodgroup } from 'src/models/bloodgroup.model';
-import { Bloodpressure } from 'src/models/bloodpressure.model';
-import { BMI } from 'src/models/bmi.model';
-import { CHOLESTEROL } from 'src/models/cholesterol.model';
-import { ECG } from 'src/models/ecg.model';
-import { Eyetest } from 'src/models/eyetest.model';
-import { Hearingtest } from 'src/models/hearingtest.model';
-import { Vision } from 'src/models/vision.model';
 import { CETMANAGEMENT } from 'src/models/CetManagement';
 import { Center } from 'src/models/Center';
 import { CenterUser } from 'src/models/CenterUser';
@@ -72,7 +62,7 @@ export class CetAdminServiceLMC {
   constructor(
     private readonly sequelize: Sequelize,
     private readonly authService: AuthService,
-  ) {}
+  ) { }
 
   async createCET(req: any, res: any) {
     const {
@@ -316,58 +306,58 @@ export class CetAdminServiceLMC {
     }
   }
 
-    async updateCETStatus(req, res) {
-      const { id, status } = req.body;
-  
-      if (!id) {
-        return sendError(res, 400, 'ID Required');
-      }
-  
-      if (typeof status !== 'string' || !['Active', 'Inactive'].includes(status)) {
-        return sendError(res, 400, 'bad request , status required (Active/Inactive)');
-      }
-  
-      try {
-        const user = await CETMANAGEMENT.findOne({
-          where: { id },
-        });
-  
-        if (!user) {
-          return sendError(res, 404, 'CETMANAGEMENT id not found');
-        }
+  async updateCETStatus(req, res) {
+    const { id, status } = req.body;
 
-        const transaction = await this.sequelize.transaction();
-        try {
-          const result = await CETMANAGEMENT.update({ status }, { where: { id }, transaction });
-
-          // Requirement: If CET is disabled, disable all its CET users (Users.status=false)
-          if (status === 'Inactive') {
-            const mappings = await Cetuser.findAll({
-              where: { cet_id: id },
-              attributes: ['user_id'],
-              raw: true,
-              transaction,
-            });
-            const userIds = mappings
-              .map((m: { user_id?: number }) => m.user_id)
-              .filter((uid) => uid != null);
-            if (userIds.length) {
-              await User.update({ status: false }, { where: { id: userIds }, transaction });
-            }
-          }
-
-          // Requirement: If CET becomes Active again, do NOT auto-enable users (manual enable only)
-
-          await transaction.commit();
-          return sendSuccess(res, 200, result, 'Status Update Successfully');
-        } catch (error) {
-          await transaction.rollback();
-          throw error;
-        }
-      } catch (error) {
-        return sendError(res, 500, error.message);
-      }
+    if (!id) {
+      return sendError(res, 400, 'ID Required');
     }
+
+    if (typeof status !== 'string' || !['Active', 'Inactive'].includes(status)) {
+      return sendError(res, 400, 'bad request , status required (Active/Inactive)');
+    }
+
+    try {
+      const user = await CETMANAGEMENT.findOne({
+        where: { id },
+      });
+
+      if (!user) {
+        return sendError(res, 404, 'CETMANAGEMENT id not found');
+      }
+
+      const transaction = await this.sequelize.transaction();
+      try {
+        const result = await CETMANAGEMENT.update({ status }, { where: { id }, transaction });
+
+        // Requirement: If CET is disabled, disable all its CET users (Users.status=false)
+        if (status === 'Inactive') {
+          const mappings = await Cetuser.findAll({
+            where: { cet_id: id },
+            attributes: ['user_id'],
+            raw: true,
+            transaction,
+          });
+          const userIds = mappings
+            .map((m: { user_id?: number }) => m.user_id)
+            .filter((uid) => uid != null);
+          if (userIds.length) {
+            await User.update({ status: false }, { where: { id: userIds }, transaction });
+          }
+        }
+
+        // Requirement: If CET becomes Active again, do NOT auto-enable users (manual enable only)
+
+        await transaction.commit();
+        return sendSuccess(res, 200, result, 'Status Update Successfully');
+      } catch (error) {
+        await transaction.rollback();
+        throw error;
+      }
+    } catch (error) {
+      return sendError(res, 500, error.message);
+    }
+  }
 
   async assignCET(req, res) {
     try {
@@ -378,8 +368,8 @@ export class CetAdminServiceLMC {
       const hasPermissionId = req.body?.permission_id != null && req.body?.permission_id !== '';
       const hasRoleId = req.body?.role_id != null && req.body?.role_id !== '';
 
-      if(!hasRoleId){
-        if (!hasPermissionId ) {
+      if (!hasRoleId) {
+        if (!hasPermissionId) {
           return sendError(res, 400, 'permission id required');
         }
       }
@@ -567,54 +557,54 @@ export class CetAdminServiceLMC {
   }
 
   // ---------------- UPDATE CET USER STATUS ----------------
-    async updateCetUserStatus(req, res) {
-      try {
-        const { id, status } = req.body;
-  
-        if (!id) {
-          return sendError(res, 400, 'id required');
-        }
-  
-        if (typeof status !== 'boolean') {
-          return sendError(res, 400, 'bad request , status required');
-        }
-  
-        const user = await User.findOne({ where: { id } });
-        if (!user) {
-          return sendError(res, 404, 'User id not found');
-        }
+  async updateCetUserStatus(req, res) {
+    try {
+      const { id, status } = req.body;
 
-        // Requirement: If CET is inactive, do not allow enabling a CET user
-        if (status === true) {
-          const mapping = await Cetuser.findOne({
-            where: { user_id: id },
-            attributes: ['cet_id'],
+      if (!id) {
+        return sendError(res, 400, 'id required');
+      }
+
+      if (typeof status !== 'boolean') {
+        return sendError(res, 400, 'bad request , status required');
+      }
+
+      const user = await User.findOne({ where: { id } });
+      if (!user) {
+        return sendError(res, 404, 'User id not found');
+      }
+
+      // Requirement: If CET is inactive, do not allow enabling a CET user
+      if (status === true) {
+        const mapping = await Cetuser.findOne({
+          where: { user_id: id },
+          attributes: ['cet_id'],
+          raw: true,
+        });
+
+        if (mapping?.cet_id) {
+          const cet = await CETMANAGEMENT.findOne({
+            where: { id: mapping.cet_id },
+            attributes: ['id', 'status'],
             raw: true,
           });
 
-          if (mapping?.cet_id) {
-            const cet = await CETMANAGEMENT.findOne({
-              where: { id: mapping.cet_id },
-              attributes: ['id', 'status'],
-              raw: true,
-            });
-
-            if (cet && String(cet.status) === 'Inactive') {
-              return sendError(res, 400, 'cet_inactive');
-            }
+          if (cet && String(cet.status) === 'Inactive') {
+            return sendError(res, 400, 'cet_inactive');
           }
         }
-  
-        const result = await User.update({ status }, { where: { id } });
-  
-        return sendSuccess(res, 200, result, 'Status Update Successfully');
-      } catch (error) {
-        return sendError(res, 500, error.message);
       }
+
+      const result = await User.update({ status }, { where: { id } });
+
+      return sendSuccess(res, 200, result, 'Status Update Successfully');
+    } catch (error) {
+      return sendError(res, 500, error.message);
     }
+  }
 
   async downloadCsvCet(req, res) {
-    const { cet, start_date, end_date } = req.body;
+    const { cet, start_date, end_date, center_id, center_ids } = req.body;
 
     let whereCondition: any = {};
     let whereCondition2: any = {};
@@ -623,170 +613,518 @@ export class CetAdminServiceLMC {
       whereCondition.transpoter = cet;
     }
 
+    const centerFilter = center_id || center_ids;
+    if (centerFilter) {
+      let cIds: number[] = [];
+      if (Array.isArray(centerFilter)) {
+        cIds = centerFilter.map((id) => Number(id)).filter((id) => !isNaN(id));
+      } else if (typeof centerFilter === 'string') {
+        cIds = centerFilter
+          .split(',')
+          .map((id) => Number(id.trim()))
+          .filter((id) => !isNaN(id));
+      } else if (typeof centerFilter === 'number') {
+        cIds = [centerFilter];
+      }
+      if (cIds.length > 0) {
+        whereCondition.createdBy =
+          cIds.length === 1 ? cIds[0] : { [Op.in]: cIds };
+      }
+    }
+
     if (start_date && end_date) {
+      const window = getOperationalDateRangeWindow(start_date, end_date);
       whereCondition2.date_time = {
-        [Op.between]: [`${start_date} 00:00:00`, `${end_date} 23:59:59`],
+        [Op.gte]: window.startUtc,
+        [Op.lte]: window.endUtc,
       };
     } else if (start_date && !end_date) {
-      const startDateFormatted = `${start_date} 00:00:00`;
-      const now = new Date();
+      const window = getOperationalDayWindow(start_date);
+      const now = moment().utc().format();
 
       whereCondition2.date_time = {
-        [Op.gte]: startDateFormatted,
-        [Op.lt]: now,
+        [Op.gte]: window.startUtc,
+        [Op.lte]: now,
       };
     } else {
-      const now = new Date();
-      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const now = moment().utc().format();
+      const oneDayAgo = moment().subtract(24, 'hours').utc().format();
 
       whereCondition2.date_time = {
         [Op.gte]: oneDayAgo,
-        [Op.lt]: now,
+        [Op.lte]: now,
       };
     }
 
     try {
-      const cetUser = await driverhealthcheckup.findAll({
-        where: {
-          ...whereCondition,
-          ...whereCondition2,
-        },
-        include: [
-          {
-            model: Doctor,
-            as: 'doctor',
-            include: [
-              {
-                model: User,
-                as: 'User',
-                attributes: [
-                  'id',
-                  'username',
-                  'name',
-                  'status',
-                  'phone',
-                  'external_id',
-                  'email',
-                ],
-              },
-            ],
-          },
-          {
-            model: Center,
-            as: 'center',
-          },
-          {
-            model: DRIVERMASTER,
-            as: 'driver',
-          },
-          {
-            model: User,
-            as: 'user',
-            attributes: [
-              'id',
-              'username',
-              'name',
-              'status',
-              'phone',
-              'external_id',
-              'email',
-            ],
-          },
-          {
-            model: CETMANAGEMENT,
-            as: 'CETMANAGEMENT',
-          },
-        ],
-        order: [['id', 'DESC']],
-        raw: true,
-        nest: true,
-        attributes: [
-          'vehicle_no',
-          'id',
-          'date_time',
-          'selected_package_name',
-          'patient_type',
-          'shipmentno',
-          'gateentryno',
-          [this.sequelize.col('CETMANAGEMENT.name'), 'CETName'],
-          [this.sequelize.col('center.project_name'), 'CenterName'],
-          [this.sequelize.col('user.username'), 'CenterUserName'],
-          [this.sequelize.col('driver.name'), 'WorkforceName'],
-          [this.sequelize.col('driver.healthCardNumber'), 'HealthCardNumber'],
-          [this.sequelize.col('driver.contactNumber'), 'WorkforceMobileNo'],
-        ],
-      });
-
-      const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('CetUsers');
-
-      const trimValue = (value) => {
-        if (value === null || value === undefined) return value;
-        if (typeof value === 'string') {
-          return value
-            .replace(/[\x00-\x1F\x7F-\x9F]/g, '')
-            .replace(/^['"]+/g, '')
-            .replace(/['"]+$/g, '')
-            .replace(/^\s+|\s+$/g, '')
-            .replace(/\s+/g, ' ');
-        }
-        return value;
+      const cleanCsvValue = (value: any): string => {
+        if (value === null || value === undefined) return '';
+        const stringValue = String(value).trim().replace(/'/g, '');
+        if (/^n\/?a$/i.test(stringValue)) return '';
+        return stringValue;
       };
 
-      worksheet.columns = [
-        { header: 'CET Name', key: 'CETName', width: 20 },
-        { header: 'Center Name', key: 'CenterName', width: 20 },
-        { header: 'Center User Name', key: 'CenterUserName', width: 20 },
-        { header: 'Test Date', key: 'TestDate', width: 15 },
-        { header: 'Test Timestamp', key: 'TestTimestamp', width: 20 },
-        { header: 'Test Package Name', key: 'TestPackageName', width: 30 },
-        { header: 'Workforce Name', key: 'WorkforceName', width: 20 },
-        { header: 'Health Card Number', key: 'HealthCardNumber', width: 20 },
-        { header: 'Workforce Mobile No', key: 'WorkforceMobileNo', width: 15 },
-        { header: 'Vehicle Number', key: 'VehicleNumber', width: 15 },
-        { header: 'Patient Type', key: 'PatientType', width: 15 },
-        { header: 'Shipment Number', key: 'ShipmentNumber', width: 18 },
-        { header: 'Gate Entry Number', key: 'GateEntryNumber', width: 18 },
-        { header: 'Test ID', key: 'id', width: 10 },
+      const VISION_ACUITY_LIKE = /^\d+(\.\d+)?\s*\/\s*\d+(\.\d+)?$/;
+      const excelSafeVisionAcuity = (value: string): string => {
+        const v = value.trim();
+        if (!v || !VISION_ACUITY_LIKE.test(v)) return value;
+        return `\u200B${v}`;
+      };
+
+      const getWorkforceAgeYears = (dateOfBirthOrAge?: string): string => {
+        if (!dateOfBirthOrAge?.trim()) return '';
+        const trimmed = dateOfBirthOrAge.trim();
+        const dob = moment(trimmed, 'DD-MM-YYYY', true);
+        if (dob.isValid()) {
+          const years = moment().diff(dob, 'years');
+          return years >= 0 ? String(years) : '';
+        }
+        const numericAge = Number(trimmed);
+        if (!isNaN(numericAge) && numericAge >= 0) {
+          return String(Math.floor(numericAge));
+        }
+        const fallbackDob = moment(trimmed);
+        if (fallbackDob.isValid()) {
+          const years = moment().diff(fallbackDob, 'years');
+          return years >= 0 ? String(years) : '';
+        }
+        return '';
+      };
+
+      const formatPackageNames = (pkgName: any): string => {
+        if (!pkgName) return '';
+        if (Array.isArray(pkgName)) {
+          return pkgName.flat().join(', ');
+        }
+        return String(pkgName);
+      };
+
+      const getTeleConsultationValue = (obj: any) => {
+        const hasReadyPrescription = Array.isArray(obj?.checkupPrescriptions)
+          ? obj.checkupPrescriptions.some((item: any) => item?.isReady === true)
+          : false;
+        if (hasReadyPrescription || obj?.isReady === true) return 'yes';
+        if (obj?.isReady === false) return 'no';
+        return '';
+      };
+
+      const FIXED_EXPORT_HEADERS = [
+        { label: 'CET Name', key: 'cet_name' },
+        { label: 'Center Name', key: 'center_name' },
+        { label: 'Center User Name', key: 'center_user_name' },
+        { label: 'Test Date', key: 'date' },
+        { label: 'Test Timestamp', key: 'test_timestamp' },
+        { label: 'Patient Type', key: 'patient_type' },
+        { label: 'Test Package Name', key: 'package_name' },
+        { label: 'Workforce Name', key: 'workforce_name' },
+        { label: 'Workforce ID', key: 'workforce_id' },
+        { label: 'Age (Years)', key: 'workforce_age_years' },
+        { label: 'Health Card Number', key: 'health_card_number' },
+        { label: 'Workforce Mobile No', key: 'contact_number' },
+        { label: 'Vehicle Number', key: 'vehicle_no' },
+        { label: 'Test ID', key: 'Test_id' },
+        { label: 'Shipment Number', key: 'Shipment_Number' },
+        { label: 'Gate Entry Number', key: 'Gate_Entry_Number' },
+        { label: 'ABHA Number', key: 'ABHA_Number' },
+        { label: 'Temperature', key: 'temperature_value' },
+        { label: 'Unit', key: 'temperature_unit' },
+        { label: 'HIV', key: 'hiv_value' },
+        { label: 'Unit', key: 'hiv_unit' },
+        { label: 'BMI (Body Mass Index)', key: 'bmi_value' },
+        { label: 'Unit', key: 'bmi_unit' },
+        { label: 'ECG', key: 'ecg_value' },
+        { label: 'Unit', key: 'ecg_unit' },
+        { label: 'Alcohol Test', key: 'alchol_test_value' },
+        { label: 'Unit', key: 'alchol_test_unit' },
+        { label: 'Pulse', key: 'pulse_value' },
+        { label: 'Unit', key: 'pulse_unit' },
+        { label: 'Haemoglobin', key: 'haemoglobin_value' },
+        { label: 'Unit', key: 'haemoglobin_unit' },
+        { label: 'Random Blood Sugar', key: 'random_blood_sugar_value' },
+        { label: 'Unit', key: 'random_blood_sugar_unit' },
+        { label: 'SPO2', key: 'spo2_value' },
+        { label: 'Unit', key: 'spo2_unit' },
+        { label: 'Hearing', key: 'hearing_value' },
+        { label: 'Unit', key: 'hearing_unit' },
+        { label: 'PFT (Pulmonary Function Test)', key: 'pulmonary_function_test_value' },
+        { label: 'Unit', key: 'pulmonary_function_test_unit' },
+        { label: 'Romberg Test', key: 'romberg_value' },
+        { label: 'Unit', key: 'romberg_unit' },
+        { label: 'BP Systolic', key: 'systolic_bp_value' },
+        { label: 'Unit', key: 'systolic_bp_unit' },
+        { label: 'BP Diastolic', key: 'diastolic_bp_value' },
+        { label: 'Unit', key: 'diastolic_bp_unit' },
+        { label: 'Spherical Right', key: 'spherical_right_eye_value' },
+        { label: 'Unit', key: 'spherical_right_eye_unit' },
+        { label: 'Cylindrical Right', key: 'cylindrical_right_eye_value' },
+        { label: 'Unit', key: 'cylindrical_right_eye_unit' },
+        { label: 'Vision (Right Eye)', key: 'vision_right_eye_value' },
+        { label: 'Spherical Left', key: 'spherical_left_eye_value' },
+        { label: 'Unit', key: 'spherical_left_eye_unit' },
+        { label: 'Cylindrical Left', key: 'cylindrical_left_eye_value' },
+        { label: 'Unit', key: 'cylindrical_left_eye_unit' },
+        { label: 'Vision (Left Eye)', key: 'vision_left_eye_value' },
+        { label: 'Wearing Specs', key: 'vision_wearing_specs' },
+        { label: 'Colour Blindness', key: 'colour_blindness_value' },
+        { label: 'Unit', key: 'colour_blindness_unit' },
       ];
 
-      cetUser.forEach((data) => {
-        const packageNames = Array.isArray(data.selected_package_name)
-          ? data.selected_package_name.join(',')
-          : data.selected_package_name || '';
+      const MOBILAB_PANEL_TESTS = [
+        'Albumin', 'Bilirubin_Total', 'Cholesterol', 'Creatinine', 'Glucose',
+        'HbA1C', 'LDL', 'SGOT', 'SGPT', 'Total_Protein', 'Triglyceride',
+        'Urea', 'Uric_Acid', 'Haemoglobin',
+      ];
 
-        worksheet.addRow({
-          CETName: trimValue(data.CETMANAGEMENT?.name),
-          CenterName: trimValue(data.center?.project_name),
-          CenterUserName: trimValue(data.user?.username),
-          TestDate: new Date(data.date_time).toISOString().split('T')[0],
-          TestTimestamp: trimValue(data.date_time),
-          TestPackageName: trimValue(packageNames),
-          WorkforceName: trimValue(data.driver?.name),
-          HealthCardNumber: trimValue(data.driver?.healthCardNumber),
-          WorkforceMobileNo: trimValue(data.driver?.contactNumber),
-          VehicleNumber: trimValue(data.vehicle_no),
-          PatientType: trimValue(data.patient_type),
-          ShipmentNumber: trimValue(data.shipmentno),
-          GateEntryNumber: trimValue(data.gateentryno),
-          id: data.id,
-        });
+      const MOBILAB_PANEL_HEADERS = MOBILAB_PANEL_TESTS.flatMap((t) => {
+        const label = t.replace(/_/g, ' ');
+        const key = t.toLowerCase();
+        return [
+          { label, key: `mobilab_${key}_value` },
+          { label: `${label} Unit`, key: `mobilab_${key}_unit` },
+        ];
       });
+
+      const CBC_ROW_ORDER = [
+        'wbc', 'neut_hash', 'neut_percent', 'lym_hash', 'lym_percent',
+        'mxd_hash', 'mxd_percent', 'rbc', 'hgb', 'hct', 'mcv', 'mch',
+        'mchc', 'rdw_sd', 'rdw_cv', 'plt', 'pdw', 'mpv', 'pct', 'p_lcr',
+        'p_lcc', 'plr', 'nlr',
+      ];
+
+      const CBC_DISPLAY_LABELS: Record<string, string> = {
+        wbc: 'WBC', neut_hash: 'NEUT #', neut_percent: 'NEUT %', lym_hash: 'LYM #', lym_percent: 'LYM %',
+        mxd_hash: 'MXD #', mxd_percent: 'MXD %', rbc: 'RBC', hgb: 'HGB', hct: 'HCT', mcv: 'MCV',
+        mch: 'MCH', mchc: 'MCHC', rdw_sd: 'RDW_SD', rdw_cv: 'RDW_CV', plt: 'PLT', pdw: 'PDW',
+        mpv: 'MPV', pct: 'PCT', p_lcr: 'P_LCR', p_lcc: 'P_LCC', plr: 'PLR', nlr: 'NLR',
+      };
+
+      const MOBILAB_CBC_HEADERS = CBC_ROW_ORDER.flatMap((fk) => {
+        const d = CBC_DISPLAY_LABELS[fk] || fk;
+        return [
+          { label: `CBC ${d}`, key: `mobilab_cbc_${fk}_value` },
+          { label: `CBC ${d} Unit`, key: `mobilab_cbc_${fk}_unit` },
+        ];
+      });
+
+      const TRAILING_EXPORT_HEADERS = [
+        { label: 'Tele consultation', key: 'Tele_consultation' },
+        { label: 'Fitness Status', key: 'Fitness_Status' },
+        { label: 'WhatsApp Report Shared', key: 'WhatsApp_Report_Shared' },
+        { label: 'Package Payment Type', key: 'Package_Payment_Type' },
+        { label: 'Package Amount', key: 'Package_Amount' },
+        { label: 'Medicine Payment Type', key: 'Medicine_Payment_Type' },
+        { label: 'Medicine Amount', key: 'Medicine_Amount' },
+        { label: 'Total Amount', key: 'Total_Amount' },
+      ];
+
+      const ALL_EXPORT_HEADERS = [
+        ...FIXED_EXPORT_HEADERS,
+        ...MOBILAB_PANEL_HEADERS,
+        ...MOBILAB_CBC_HEADERS,
+        ...TRAILING_EXPORT_HEADERS,
+      ];
+
+      const NA_VAL = '';
+
+      const extractTestEntries = (selectedTestRaw: any) => {
+        let selectedTest = selectedTestRaw;
+        if (typeof selectedTest === 'string') {
+          try {
+            selectedTest = JSON.parse(selectedTest);
+          } catch {
+            selectedTest = {};
+          }
+        }
+
+        const regularEntries: any[] = [];
+        const mobilabPanelEntries: any[] = [];
+        const mobilabCbcEntries: any[] = [];
+
+        const collect = (node: any, dest: any[]) => {
+          if (!node || typeof node !== 'object') return;
+          if (typeof node?.key === 'string' && Object.prototype.hasOwnProperty.call(node, 'value')) {
+            dest.push({
+              key: node.key,
+              value: cleanCsvValue(node.value),
+              units: cleanCsvValue(node.units) || NA_VAL,
+              label: cleanCsvValue(node.label) || cleanCsvValue(node.key),
+            });
+            return;
+          }
+          Object.values(node).forEach((v) => collect(v, dest));
+        };
+
+        const { mobilab_tests, ...rest } = selectedTest || {};
+        collect(rest, regularEntries);
+
+        if (mobilab_tests && typeof mobilab_tests === 'object') {
+          Object.entries(mobilab_tests).forEach(([pKey, pTests]: [string, any]) => {
+            if (!pTests || typeof pTests !== 'object' || Array.isArray(pTests)) return;
+            const dest = String(pKey).toLowerCase() === 'cbc' ? mobilabCbcEntries : mobilabPanelEntries;
+            collect(pTests, dest);
+          });
+        }
+
+        return { regularEntries, mobilabPanelEntries, mobilabCbcEntries, rawSelectedTest: selectedTest };
+      };
+
+      const toCsvKey = (key = '') =>
+        String(key)
+          .replace(/_unit$/i, '')
+          .replace(/([a-z])([A-Z])/g, '$1_$2')
+          .replace(/[\s-]+/g, '_')
+          .replace(/_+/g, '_')
+          .toLowerCase();
+
+      const normalizeFixedKey = (key = '') => {
+        const normalized = toCsvKey(key);
+        if (normalized === 'cretenine') return 'creatinine';
+        if (normalized === 'hba1c' || normalized === 'hba_1c' || normalized === 'hb_a1c') return 'hba_1_c';
+        return normalized;
+      };
 
       res.setHeader(
         'Content-Type',
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       );
-      res.setHeader('Content-Disposition', 'attachment; filename=Cet.xlsx');
+      const formattedFilename = `download-data-${moment().tz('Asia/Kolkata').format('YYYY-MM-DD')}.xlsx`;
+      res.setHeader('Content-Disposition', `attachment; filename="${formattedFilename}"`);
 
-      await workbook.xlsx.write(res);
-      res.end();
+      const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
+        stream: res,
+        useStyles: true,
+        useSharedStrings: true,
+      });
+
+      const worksheet = workbook.addWorksheet('CetUsers');
+
+      const headerRow = worksheet.addRow(ALL_EXPORT_HEADERS.map((h) => h.label));
+      headerRow.font = { name: 'Calibri', size: 11, bold: true };
+      headerRow.alignment = {
+        vertical: 'middle',
+        horizontal: 'center',
+        wrapText: true,
+      };
+      headerRow.commit();
+
+      let offset = 0;
+      const batchSize = 2000;
+      let hasMore = true;
+
+      while (hasMore) {
+        const cetUserBatch = await driverhealthcheckup.findAll({
+          where: {
+            ...whereCondition,
+            ...whereCondition2,
+          },
+          include: [
+            {
+              model: Doctor,
+              as: 'doctor',
+              include: [
+                {
+                  model: User,
+                  as: 'user',
+                  attributes: [
+                    'id',
+                    'username',
+                    'name',
+                    'status',
+                    'phone',
+                    'external_id',
+                    'email',
+                  ],
+                },
+              ],
+            },
+            { model: Center, as: 'center' },
+            { model: DRIVERMASTER, as: 'driver' },
+            {
+              model: User,
+              as: 'user',
+              attributes: [
+                'id',
+                'username',
+                'name',
+                'status',
+                'phone',
+                'external_id',
+                'email',
+              ],
+            },
+            { model: CETMANAGEMENT, as: 'CETMANAGEMENT' },
+            {
+              model: Prescription,
+              as: 'checkupPrescriptions',
+              attributes: ['isReady', 'createdAt'],
+              separate: true,
+              order: [['createdAt', 'DESC']],
+            },
+          ],
+          order: [['id', 'DESC']],
+          offset,
+          limit: batchSize,
+        });
+
+        if (!cetUserBatch || cetUserBatch.length === 0) {
+          hasMore = false;
+          break;
+        }
+
+        cetUserBatch.forEach((record: any) => {
+          const obj = record.get({ plain: true });
+          const { regularEntries, mobilabPanelEntries, mobilabCbcEntries, rawSelectedTest } = extractTestEntries(obj.selected_test);
+
+          const regularLookup: Record<string, any> = {};
+          regularEntries.forEach((entry) => {
+            const key = normalizeFixedKey(entry.key);
+            if (!regularLookup[key]) {
+              regularLookup[key] = entry;
+            }
+          });
+
+          const fixedValueFields: Record<string, string> = {};
+          FIXED_EXPORT_HEADERS.forEach((header) => {
+            if (
+              [
+                'cet_name', 'center_name', 'center_user_name', 'date', 'test_timestamp',
+                'patient_type', 'package_name', 'workforce_name', 'workforce_id',
+                'workforce_age_years', 'health_card_number', 'contact_number',
+                'vehicle_no', 'Test_id', 'Shipment_Number', 'Gate_Entry_Number', 'ABHA_Number',
+              ].includes(header.key)
+            ) {
+              return;
+            }
+
+            if (header.key.endsWith('_value')) {
+              const baseKey = normalizeFixedKey(header.key.replace(/_value$/, ''));
+              const entry = regularLookup[baseKey];
+              let rawValue = entry?.value ?? '';
+              if (baseKey === 'vision_left_eye' || baseKey === 'vision_right_eye') {
+                rawValue = excelSafeVisionAcuity(rawValue);
+              }
+              fixedValueFields[header.key] = rawValue;
+              return;
+            }
+
+            if (header.key.endsWith('_unit')) {
+              const baseKey = normalizeFixedKey(header.key.replace(/_unit$/, ''));
+              const entry = regularLookup[baseKey];
+              fixedValueFields[header.key] = entry?.units ?? '';
+              return;
+            }
+
+            const directEntry = regularLookup[normalizeFixedKey(header.key)];
+            fixedValueFields[header.key] = directEntry?.value ?? '';
+          });
+
+          const visionUnit = rawSelectedTest?.vision_unit;
+          if (visionUnit && typeof visionUnit === 'object') {
+            fixedValueFields.vision_left_eye_value = excelSafeVisionAcuity(
+              cleanCsvValue(visionUnit.left_eye_value ?? visionUnit.value ?? ''),
+            );
+            fixedValueFields.vision_right_eye_value = excelSafeVisionAcuity(
+              cleanCsvValue(visionUnit.right_eye_value ?? visionUnit.value ?? ''),
+            );
+            fixedValueFields.vision_wearing_specs =
+              visionUnit.is_wearing_specs === true
+                ? 'Yes'
+                : visionUnit.is_wearing_specs === false
+                  ? 'No'
+                  : '';
+          }
+
+          const mobilabPanelLookup: Record<string, any> = {};
+          mobilabPanelEntries.forEach((entry) => {
+            const k = toCsvKey(entry.key);
+            if (!mobilabPanelLookup[k]) mobilabPanelLookup[k] = entry;
+          });
+
+          const mobilabPanelFields: Record<string, string> = {};
+          MOBILAB_PANEL_TESTS.forEach((t) => {
+            const k = t.toLowerCase();
+            const match = mobilabPanelLookup[k];
+            mobilabPanelFields[`mobilab_${k}_value`] = match?.value ? match.value : NA_VAL;
+            mobilabPanelFields[`mobilab_${k}_unit`] = match?.units ? match.units : NA_VAL;
+          });
+
+          const mobilabCbcLookup: Record<string, any> = {};
+          mobilabCbcEntries.forEach((entry) => {
+            const k = toCsvKey(entry.key);
+            if (!mobilabCbcLookup[k]) mobilabCbcLookup[k] = entry;
+          });
+
+          const mobilabCbcFields: Record<string, string> = {};
+          CBC_ROW_ORDER.forEach((fk) => {
+            const match = mobilabCbcLookup[fk];
+            mobilabCbcFields[`mobilab_cbc_${fk}_value`] = match?.value ? match.value : NA_VAL;
+            mobilabCbcFields[`mobilab_cbc_${fk}_unit`] = match?.units ? match.units : NA_VAL;
+          });
+
+          const rowObj: Record<string, any> = {
+            cet_name: cleanCsvValue(obj.CETMANAGEMENT?.name),
+            center_name: cleanCsvValue(obj.center?.project_name),
+            center_user_name: cleanCsvValue(obj.user?.name || obj.user?.username),
+            date: obj.date_time ? moment(obj.date_time).tz('Asia/Kolkata').format('DD-MM-YYYY') : '',
+            test_timestamp: obj.date_time ? moment(obj.date_time).tz('Asia/Kolkata').format('HH:mm:ss') : '',
+            patient_type: cleanCsvValue(obj.patient_type),
+            package_name: formatPackageNames(obj.selected_package_name),
+            workforce_name: cleanCsvValue(obj.driver?.name),
+            workforce_id: cleanCsvValue(obj.driver?.idProof_number),
+            workforce_age_years: getWorkforceAgeYears(obj.driver?.dateOfBirthOrAge),
+            health_card_number: cleanCsvValue(obj.driver?.healthCardNumber),
+            contact_number: cleanCsvValue(obj.driver?.contactNumber),
+            vehicle_no: cleanCsvValue(obj.vehicle_no),
+            Test_id: obj.id,
+            Shipment_Number: cleanCsvValue(obj.shipmentno),
+            Gate_Entry_Number: cleanCsvValue(obj.gateentryno),
+            ABHA_Number: cleanCsvValue(obj.driver?.abhaNumber),
+            ...fixedValueFields,
+            ...mobilabPanelFields,
+            ...mobilabCbcFields,
+            Tele_consultation: getTeleConsultationValue(obj),
+            Fitness_Status: cleanCsvValue(obj.fitness_status),
+            WhatsApp_Report_Shared:
+              obj.is_whatsapp_report_sent === true ||
+              obj.is_whatsapp_report_sent === 1 ||
+              obj.is_whatsapp_report_sent === 'true'
+                ? 'Yes'
+                : 'No',
+            Package_Payment_Type: cleanCsvValue(obj.package_payment_type) || 'PAID_BY_CET',
+            Package_Amount: obj.package_amount !== undefined && obj.package_amount !== null ? String(obj.package_amount) : '0.00',
+            Medicine_Payment_Type: cleanCsvValue(obj.medicine_payment_type) || 'NA',
+            Medicine_Amount: obj.medicine_amount !== undefined && obj.medicine_amount !== null ? String(obj.medicine_amount) : '0.00',
+            Total_Amount: obj.total_amount !== undefined && obj.total_amount !== null ? String(obj.total_amount) : '0.00',
+          };
+
+          const row = worksheet.addRow(ALL_EXPORT_HEADERS.map((h) => rowObj[h.key] ?? ''));
+          row.font = { name: 'Calibri', size: 11 };
+          row.alignment = {
+            vertical: 'middle',
+            horizontal: 'left',
+            wrapText: true,
+          };
+          row.commit();
+        });
+
+        offset += batchSize;
+
+        if (cetUserBatch.length < batchSize) {
+          hasMore = false;
+        }
+      }
+
+      await workbook.commit();
     } catch (error) {
-      return sendError(res, 500, error.message);
+      console.error('Error in downloadCsvCet stream:', error);
+      if (!res.headersSent) {
+        return sendError(res, 500, error.message);
+      }
+      res.end();
     }
   }
 
-  private trimAllStrings = (obj) => {
+  private trimAllStrings(obj: any) {
     if (obj === null || obj === undefined) {
       return obj;
     }
@@ -821,11 +1159,49 @@ export class CetAdminServiceLMC {
   };
 
   async CsvCetList(req, res) {
-    const { cet, start_date, end_date } = req.body;
+    const {
+      cet,
+      start_date,
+      end_date,
+      center_id,
+      center_ids,
+      page = 1,
+      limit = 10,
+      search_cet_name,
+      search_center_name,
+      search_id_proof_number,
+      search_package_name,
+      search_workforce_name,
+      search_vehicle_no,
+      search_shipmentno,
+      search_gateentryno,
+      search_abha_number,
+      search_test_id,
+      search_patient_type,
+    } = req.body;
     let whereCondition: WhereOptions<any> = {};
 
     if (cet && cet !== 'all') {
       whereCondition.transpoter = cet;
+    }
+
+    const centerFilter = center_id || center_ids;
+    if (centerFilter) {
+      let cIds: number[] = [];
+      if (Array.isArray(centerFilter)) {
+        cIds = centerFilter.map((id) => Number(id)).filter((id) => !isNaN(id));
+      } else if (typeof centerFilter === 'string') {
+        cIds = centerFilter
+          .split(',')
+          .map((id) => Number(id.trim()))
+          .filter((id) => !isNaN(id));
+      } else if (typeof centerFilter === 'number') {
+        cIds = [centerFilter];
+      }
+      if (cIds.length > 0) {
+        whereCondition.createdBy =
+          cIds.length === 1 ? cIds[0] : { [Op.in]: cIds };
+      }
     }
 
     if (start_date && end_date) {
@@ -852,10 +1228,60 @@ export class CetAdminServiceLMC {
       };
     }
 
-    whereCondition.confirm_report = { [Op.ne]: 'no' };
+    // Column Filters for main driverhealthcheckup table
+    if (search_vehicle_no && search_vehicle_no.trim()) {
+      whereCondition.vehicle_no = { [Op.iLike]: `%${search_vehicle_no.trim()}%` };
+    }
+    if (search_shipmentno && search_shipmentno.trim()) {
+      whereCondition.shipmentno = { [Op.iLike]: `%${search_shipmentno.trim()}%` };
+    }
+    if (search_gateentryno && search_gateentryno.trim()) {
+      whereCondition.gateentryno = { [Op.iLike]: `%${search_gateentryno.trim()}%` };
+    }
+    if (search_patient_type && search_patient_type.trim()) {
+      whereCondition.patient_type = { [Op.iLike]: `%${search_patient_type.trim()}%` };
+    }
+    if (search_test_id && search_test_id.trim() && !isNaN(Number(search_test_id.trim()))) {
+      whereCondition.id = Number(search_test_id.trim());
+    }
+    if (search_package_name && search_package_name.trim()) {
+      const sanitizedPkg = search_package_name.trim().replace(/'/g, "''");
+      whereCondition[Op.and as any] = [
+        ...(whereCondition[Op.and as any] || []),
+        this.sequelize.literal(`"driverhealthcheckup"."selected_package_name"::text ILIKE '%${sanitizedPkg}%'`),
+      ];
+    }
+
+    // Column Filters for Driver association
+    const driverWhere: any = {};
+    if (search_workforce_name && search_workforce_name.trim()) {
+      driverWhere.name = { [Op.iLike]: `%${search_workforce_name.trim()}%` };
+    }
+    if (search_abha_number && search_abha_number.trim()) {
+      driverWhere.abhaNumber = { [Op.iLike]: `%${search_abha_number.trim()}%` };
+    }
+    if (search_id_proof_number && search_id_proof_number.trim()) {
+      driverWhere.idProof_number = { [Op.iLike]: `%${search_id_proof_number.trim()}%` };
+    }
+
+    // Column Filters for Center association
+    const centerWhere: any = {};
+    if (search_center_name && search_center_name.trim()) {
+      centerWhere.project_name = { [Op.iLike]: `%${search_center_name.trim()}%` };
+    }
+
+    // Column Filters for CET association
+    const cetWhere: any = {};
+    if (search_cet_name && search_cet_name.trim()) {
+      cetWhere.name = { [Op.iLike]: `%${search_cet_name.trim()}%` };
+    }
+
+    const pageNum = parseInt(String(page), 10) || 1;
+    const limitNum = parseInt(String(limit), 10) || 10;
+    const offset = (pageNum - 1) * limitNum;
 
     try {
-      const cetUser = await driverhealthcheckup.findAll({
+      const { count, rows } = await driverhealthcheckup.findAndCountAll({
         where: whereCondition,
         include: [
           {
@@ -877,8 +1303,16 @@ export class CetAdminServiceLMC {
               },
             ],
           },
-          { model: DRIVERMASTER, as: 'driver' },
-          { model: Center, as: 'center' },
+          {
+            model: DRIVERMASTER,
+            as: 'driver',
+            ...(Object.keys(driverWhere).length > 0 ? { where: driverWhere, required: true } : {}),
+          },
+          {
+            model: Center,
+            as: 'center',
+            ...(Object.keys(centerWhere).length > 0 ? { where: centerWhere, required: true } : {}),
+          },
           {
             model: User,
             as: 'user',
@@ -892,7 +1326,11 @@ export class CetAdminServiceLMC {
               'email',
             ],
           },
-          { model: CETMANAGEMENT, as: 'CETMANAGEMENT' },
+          {
+            model: CETMANAGEMENT,
+            as: 'CETMANAGEMENT',
+            ...(Object.keys(cetWhere).length > 0 ? { where: cetWhere, required: true } : {}),
+          },
           {
             model: Prescription,
             as: 'checkupPrescriptions',
@@ -902,9 +1340,12 @@ export class CetAdminServiceLMC {
           },
         ],
         order: [['id', 'DESC']],
+        limit: limitNum,
+        offset: offset,
+        distinct: true,
       });
 
-      const trimmedResults = cetUser.map((record) => {
+      const trimmedResults = rows.map((record) => {
         const plain = record.get({ plain: true });
         const trimmed = this.trimAllStrings(plain);
 
@@ -919,7 +1360,12 @@ export class CetAdminServiceLMC {
       sendSuccess(
         res,
         200,
-        trimmedResults,
+        {
+          records: trimmedResults,
+          total: count,
+          page: pageNum,
+          limit: limitNum,
+        },
         trimmedResults.length ? 'Cet Fetch Successfully' : 'No data available',
       );
     } catch (error) {
@@ -1140,6 +1586,52 @@ export class CetAdminServiceLMC {
         200,
         driver,
         'Gate Entry Number updated successfully',
+      );
+    } catch (error) {
+      return sendError(res, 500, error.message);
+    }
+  }
+
+  async editIdProofNumber(req, res) {
+    const { test_id, driver_id, new_idProofNumber } = req.body;
+
+    if (!test_id && !driver_id) {
+      return sendError(res, 400, 'Test ID or Driver ID is required');
+    }
+
+    if (new_idProofNumber === undefined || new_idProofNumber === null) {
+      return sendError(res, 400, 'ID Proof Number is required');
+    }
+
+    try {
+      let targetDriverId = driver_id;
+
+      if (!targetDriverId && test_id) {
+        const checkup = await driverhealthcheckup.findByPk(test_id);
+        if (!checkup) {
+          return sendError(res, 404, 'Health Checkup Record not found');
+        }
+        targetDriverId = checkup.driver_id;
+      }
+
+      if (!targetDriverId) {
+        return sendError(res, 404, 'Driver ID not associated with this record');
+      }
+
+      const driverMasterRecord = await DRIVERMASTER.findByPk(targetDriverId);
+      if (!driverMasterRecord) {
+        return sendError(res, 404, 'Workforce / Driver Record not found');
+      }
+
+      await driverMasterRecord.update({
+        idProof_number: new_idProofNumber.toString().trim(),
+      });
+
+      return sendSuccess(
+        res,
+        200,
+        driverMasterRecord,
+        'ID Proof Number updated successfully',
       );
     } catch (error) {
       return sendError(res, 500, error.message);
@@ -1713,8 +2205,8 @@ export class CetAdminServiceLMC {
         nest: true,
         order: [['id', 'DESC']],
         where: {
-              tenant_id: null,
-            },
+          tenant_id: null,
+        },
       });
       return data;
     } catch (error) {
@@ -1770,49 +2262,49 @@ export class CetAdminServiceLMC {
     }
   }
 
-    async centerStatusUpdate(id, status) {
+  async centerStatusUpdate(id, status) {
+    try {
+      const transaction = await this.sequelize.transaction();
       try {
-        const transaction = await this.sequelize.transaction();
-        try {
-          const result = await Center.update(
-            { status: status },
-            {
-              where: {
-                id: id,
-              },
-              transaction,
+        const result = await Center.update(
+          { status: status },
+          {
+            where: {
+              id: id,
             },
-          );
+            transaction,
+          },
+        );
 
-          // Requirement: If a center is disabled, disable all its center users (Users.status=false)
-          if (status === false) {
-            const centerUsers = await CenterUser.findAll({
-              where: { center_id: id },
-              attributes: ['user_id'],
-              raw: true,
-              transaction,
-            });
-            const userIds = centerUsers
-              .map((cu: { user_id?: number }) => cu.user_id)
-              .filter((uid) => uid != null);
-            if (userIds.length) {
-              await User.update(
-                { status: false },
-                { where: { id: userIds }, transaction },
-              );
-            }
+        // Requirement: If a center is disabled, disable all its center users (Users.status=false)
+        if (status === false) {
+          const centerUsers = await CenterUser.findAll({
+            where: { center_id: id },
+            attributes: ['user_id'],
+            raw: true,
+            transaction,
+          });
+          const userIds = centerUsers
+            .map((cu: { user_id?: number }) => cu.user_id)
+            .filter((uid) => uid != null);
+          if (userIds.length) {
+            await User.update(
+              { status: false },
+              { where: { id: userIds }, transaction },
+            );
           }
-
-          await transaction.commit();
-          return result;
-        } catch (error) {
-          await transaction.rollback();
-          throw error;
         }
+
+        await transaction.commit();
+        return result;
       } catch (error) {
-        throw new InternalServerErrorException(error.message);
+        await transaction.rollback();
+        throw error;
       }
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
     }
+  }
   async getCenterUser() {
     try {
       const centerUsers = await CenterUser.findAll({
@@ -2569,50 +3061,50 @@ export class CetAdminServiceLMC {
     }
   }
 
-    async updateCenterUserStatus(req, res) {
-      try {
-        if (!req.body.id) {
-          sendError(res, 400, 'bad request');
-          return;
-        }
+  async updateCenterUserStatus(req, res) {
+    try {
+      if (!req.body.id) {
+        sendError(res, 400, 'bad request');
+        return;
+      }
 
       if (typeof req.body.status !== 'boolean') {
         sendError(res, 400, 'bad request , status required');
         return;
       }
-        const user = await User.findOne({ where: { id: req.body.id } });
+      const user = await User.findOne({ where: { id: req.body.id } });
 
-        if (!user) {
-          sendError(res, 404, 'User id not found');
-          return;
-        }
+      if (!user) {
+        sendError(res, 404, 'User id not found');
+        return;
+      }
 
-        // Requirement: If center is inactive, do not allow enabling a center user
-        if (req.body.status === true) {
-          const mapping = await CenterUser.findOne({
-            where: { user_id: req.body.id },
-            attributes: ['center_id'],
+      // Requirement: If center is inactive, do not allow enabling a center user
+      if (req.body.status === true) {
+        const mapping = await CenterUser.findOne({
+          where: { user_id: req.body.id },
+          attributes: ['center_id'],
+          raw: true,
+        });
+
+        if (mapping?.center_id) {
+          const center = await Center.findOne({
+            where: { id: mapping.center_id },
+            attributes: ['id', 'status'],
             raw: true,
           });
 
-          if (mapping?.center_id) {
-            const center = await Center.findOne({
-              where: { id: mapping.center_id },
-              attributes: ['id', 'status'],
-              raw: true,
-            });
-
-            if (center && center.status === false) {
-              sendError(res, 400, 'center_inactive');
-              return;
-            }
+          if (center && center.status === false) {
+            sendError(res, 400, 'center_inactive');
+            return;
           }
         }
-        const result = await User.update(
-          { status: req.body.status },
-          {
-            where: {
-              id: req.body.id,
+      }
+      const result = await User.update(
+        { status: req.body.status },
+        {
+          where: {
+            id: req.body.id,
           },
         },
       );

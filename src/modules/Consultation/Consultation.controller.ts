@@ -32,47 +32,67 @@ export class ConsultationController {
   }
 
   /**
-   * Get consultations list with full pagination metadata
-   * @param page - Page number (default: 1)
-   * @param limit - Number of records per page (default: 20)
-   * @param centerID - Filter by center ID (optional)
-   * @param daysBack - Number of days back to fetch consultations (optional - if not provided, returns all consultations)
-   * @param centerGroupIds - Filter by center group IDs array (optional)
+   * Get consultations list with full pagination metadata (POST request to support large payloads)
+   * @param body - JSON object containing filter parameters (page, limit, centerID, daysBack, centerGroupIds, status, startDate, endDate, doctorName)
    * @returns Paginated response with consultations data and pagination metadata
    */
-  @Get('/list/paginated')
+  @Post('/list/paginated')
   async getAllConsultationsPaginated(
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-    @Query('centerID') centerID?: string,
-    @Query('daysBack') daysBack?: string,
-    @Query('centerGroupIds') centerGroupIds?: string | string[],
+    @Body() body: any,
   ): Promise<PaginationResponse<Consultation>> {
-    const pageNumber = page ? parseInt(page, 10) : 1;
-    const limitNumber = limit ? parseInt(limit, 10) : 20;
-    const centerIdNumber = centerID ? parseInt(centerID, 10) : undefined;
-    const daysBackNumber = daysBack ? parseInt(daysBack, 10) : undefined;
+    const pageNumber = body?.page ? parseInt(body.page, 10) : 1;
+    const limitNumber = body?.limit ? parseInt(body.limit, 10) : 10;
+    const daysBackNumber = body?.daysBack ? parseInt(body.daysBack, 10) : undefined;
     
+    // Handle centerID as array of numbers (single value, comma-separated string, array, or number)
+    let centerIdsArray: number[] | undefined;
+    if (body?.centerID !== undefined && body?.centerID !== null && body?.centerID !== '') {
+      if (Array.isArray(body.centerID)) {
+        centerIdsArray = body.centerID.map((id: any) => parseInt(id, 10)).filter((id: number) => !isNaN(id));
+      } else if (typeof body.centerID === 'string') {
+        centerIdsArray = body.centerID
+          .split(',')
+          .map((id: string) => parseInt(id.trim(), 10))
+          .filter((id: number) => !isNaN(id));
+      } else if (typeof body.centerID === 'number') {
+        centerIdsArray = [body.centerID];
+      }
+    }
+
+    // Handle status / iscomplete
+    let isCompleteBool: boolean | undefined;
+    if (body?.iscomplete !== undefined && body?.iscomplete !== null && body?.iscomplete !== '') {
+      isCompleteBool = body.iscomplete === true || body.iscomplete === 'true' || body.iscomplete === '1';
+    } else if (body?.status !== undefined && body?.status !== null && body?.status !== '') {
+      if (body.status === 'completed') isCompleteBool = true;
+      if (body.status === 'booked') isCompleteBool = false;
+    }
+
     // Handle centerGroupIds as array (can be string, string[], or comma-separated string)
     let centerGroupIdsArray: number[] | undefined;
-    if (centerGroupIds) {
-      if (Array.isArray(centerGroupIds)) {
-        centerGroupIdsArray = centerGroupIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
-      } else if (typeof centerGroupIds === 'string') {
-        // Handle comma-separated string or single value
-        centerGroupIdsArray = centerGroupIds
+    if (body?.centerGroupIds !== undefined && body?.centerGroupIds !== null && body?.centerGroupIds !== '') {
+      if (Array.isArray(body.centerGroupIds)) {
+        centerGroupIdsArray = body.centerGroupIds.map((id: any) => parseInt(id, 10)).filter((id: number) => !isNaN(id));
+      } else if (typeof body.centerGroupIds === 'string') {
+        centerGroupIdsArray = body.centerGroupIds
           .split(',')
-          .map(id => parseInt(id.trim(), 10))
-          .filter(id => !isNaN(id));
+          .map((id: string) => parseInt(id.trim(), 10))
+          .filter((id: number) => !isNaN(id));
+      } else if (typeof body.centerGroupIds === 'number') {
+        centerGroupIdsArray = [body.centerGroupIds];
       }
     }
 
     return this.consultationService.getAllConsultationsPaginated(
       pageNumber,
       limitNumber,
-      centerIdNumber,
+      centerIdsArray,
       daysBackNumber,
-      centerGroupIdsArray
+      centerGroupIdsArray,
+      isCompleteBool,
+      body?.startDate,
+      body?.endDate,
+      body?.doctorName
     );
   }
   @Get('/analysis')
